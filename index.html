@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Access UG Sch — discover schools, education information, opportunities and news across Uganda.">
+<title>About Us | Access UG Sch</title>
+
+<style>
+:root{
+  --navy:#061a35;
+  --blue:#0b63ce;
+  --blue2:#084a9b;
+  --gold:#f5bd21;
+  --cyan:#19c3e6;
+  --light:#f4f8fd;
+  --text:#17233d;
+  --muted:#667085;
+  --white:#fff;
+  --line:#e5ebf3;
+  --shadow:0 18px 50px rgba(6,26,53,.10);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:Inter,"Segoe UI",Arial,sans-serif;
+  background:var(--light);color:var(--text);line-height:1.65;
+  overflow-x:hidden;
+}
+a{text-decoration:none;color:inherit}
+button{font:inherit}
+.container{width:min(1180px,90%);margin:auto}
+header{
+  position:sticky;top:0;z-index:1000;
+  background:rgba(6,26,53,.94);backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.navbar{
+  width:min(1200px,92%);min-height:76px;margin:auto;
+  display:flex;align-items:center;justify-content:space-between;gap:25px;
+}
+.logo{display:flex;align-items:center;gap:11px;color:#fff;font-weight:900}
+.logo-mark{
+  width:44px;height:44px;border:2px solid var(--gold);border-radius:13px;
+  display:grid;place-items:center;color:var(--gold);font-weight:900;font-size:20px;
+}
+.logo-text{font-size:21px;line-height:1}
+.logo-text span{color:var(--gold)}
+.tagline{display:block;color:#aebdd2;font-size:8px;letter-spacing:1.4px;margin-top:5px}
+nav{display:flex;align-items:center;gap:8px}
+nav a{color:#eaf0f8;padding:10px 13px;border-radius:9px;font-size:13px;font-weight:700;transition:.25s}
+nav a:hover,nav a.active{color:var(--gold);background:rgba(255,255,255,.06)}
+nav .join{background:var(--gold);color:var(--navy);padding:11px 17px}
+nav .join:hover{background:#ffd34f;color:var(--navy)}
+.menu{
+  display:none;border:0;background:none;color:#fff;font-size:28px;
+  cursor:pointer;padding:5px;
+}
+
+/* HERO */
+.hero{
+  min-height:590px;position:relative;display:flex;align-items:center;
+  color:#fff;overflow:hidden;
+  background:
+    linear-gradient(90deg,rgba(3,18,43,.98) 0%,rgba(3,24,55,.91) 42%,rgba(3,24,55,.28) 100%),
+    url("images/school.jpg") center/cover no-repeat;
+}
+.hero:after{
+  content:"";position:absolute;width:420px;height:420px;border-radius:50%;
+  right:-140px;top:-150px;background:rgba(25,195,230,.12);filter:blur(4px);
+}
+.hero-content{position:relative;z-index:2;padding:85px 0;max-width:730px}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;color:var(--gold);
+  font-weight:900;letter-spacing:2px;font-size:12px;margin-bottom:16px;
+}
+.eyebrow:before{content:"";width:30px;height:2px;background:var(--gold)}
+.hero h1{font-size:clamp(48px,7vw,82px);line-height:.98;letter-spacing:-2px;margin-bottom:22px}
+.hero h1 span{color:var(--gold)}
+.hero p{font-size:18px;max-width:650px;color:#dce6f3}
+.actions{display:flex;gap:13px;flex-wrap:wrap;margin-top:30px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:13px 21px;border-radius:10px;font-size:14px;font-weight:900;
+  transition:.25s;border:1px solid transparent;
+}
+.btn:hover{transform:translateY(-3px)}
+.btn.gold{background:var(--gold);color:var(--navy)}
+.btn.ghost{border-color:rgba(255,255,255,.45);color:#fff;background:rgba(255,255,255,.04)}
+.btn.ghost:hover{background:rgba(255,255,255,.12)}
+
+/* STATS */
+.stats{
+  position:relative;z-index:5;width:min(1100px,88%);margin:-45px auto 0;
+  background:#fff;border-radius:20px;box-shadow:var(--shadow);
+  display:grid;grid-template-columns:repeat(4,1fr);overflow:hidden;
+}
+.stat{padding:27px 14px;text-align:center;border-right:1px solid var(--line)}
+.stat:last-child{border:0}
+.stat strong{display:block;font-size:30px;color:var(--navy)}
+.stat span{font-size:12px;font-weight:700;color:var(--muted)}
+
+/* GENERAL */
+section{padding:88px 0}
+.heading{text-align:center;max-width:720px;margin:0 auto 45px}
+.mini{color:var(--blue);font-size:12px;font-weight:900;letter-spacing:2px}
+.heading h2{font-size:clamp(30px,4vw,43px);line-height:1.1;color:var(--navy);margin:8px 0 12px}
+.heading p{color:var(--muted)}
+.about-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:25px}
+.panel{
+  background:#fff;border:1px solid var(--line);border-radius:22px;padding:35px;
+  box-shadow:0 10px 30px rgba(6,26,53,.06);
+}
+.panel.feature{
+  color:#fff;border:0;
+  background:linear-gradient(135deg,var(--navy),var(--blue2));
+  position:relative;overflow:hidden;
+}
+.panel.feature:after{
+  content:"";position:absolute;width:190px;height:190px;border:35px solid rgba(255,255,255,.05);
+  border-radius:50%;right:-75px;bottom:-85px;
+}
+.panel h3{font-size:24px;color:var(--navy);margin-bottom:12px}
+.panel.feature h3{color:#fff}
+.panel p{color:var(--muted)}
+.panel.feature p{color:#dce7f5}
+.check-list{display:grid;gap:12px;margin-top:22px}
+.check-list div{display:flex;gap:11px;align-items:flex-start}
+.check{color:var(--gold);font-weight:1000}
+
+/* MISSION */
+.mission{background:#fff}
+.mission-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.mission-card{
+  padding:34px;border-radius:20px;background:linear-gradient(180deg,#f8fbff,#eef5fd);
+  border:1px solid var(--line);position:relative;
+}
+.mission-card:before{content:"";position:absolute;left:0;top:25px;bottom:25px;width:5px;background:var(--blue);border-radius:0 5px 5px 0}
+.mission-card h3{color:var(--navy);font-size:25px;margin-bottom:10px;padding-left:14px}
+.mission-card p{color:var(--muted);padding-left:14px}
+
+/* FOCUS */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{
+  background:#fff;border:1px solid var(--line);border-radius:19px;padding:27px;
+  box-shadow:0 8px 25px rgba(6,26,53,.05);transition:.3s;position:relative;overflow:hidden;
+}
+.card:before{content:"";position:absolute;left:0;top:0;width:100%;height:4px;background:linear-gradient(90deg,var(--blue),var(--cyan))}
+.card:hover{transform:translateY(-8px);box-shadow:var(--shadow)}
+.icon{
+  width:52px;height:52px;border-radius:14px;background:#edf5ff;color:var(--blue);
+  display:grid;place-items:center;font-weight:1000;font-size:19px;margin-bottom:17px;
+}
+.card h3{color:var(--navy);margin-bottom:8px}
+.card p{color:var(--muted);font-size:14px}
+
+/* VALUES */
+.values{display:grid;grid-template-columns:repeat(5,1fr);gap:15px}
+.value{
+  text-align:center;background:#fff;border:1px solid var(--line);padding:26px 14px;
+  border-radius:17px;transition:.25s;
+}
+.value:hover{transform:translateY(-5px);border-color:#c8d8ed}
+.vicon{font-size:26px;color:var(--blue);font-weight:900;margin-bottom:9px}
+.value h3{color:var(--navy);font-size:16px}
+.value p{font-size:12px;color:var(--muted);margin-top:5px}
+
+/* OBJECTIVES */
+.objectives{background:#edf4fc}
+.objective-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.objective{
+  background:#fff;border:1px solid var(--line);border-radius:17px;padding:23px;
+  display:flex;gap:14px;box-shadow:0 6px 20px rgba(6,26,53,.05);
+}
+.number{
+  flex:0 0 42px;height:42px;border-radius:50%;background:var(--navy);color:#fff;
+  display:grid;place-items:center;font-weight:900;
+}
+.objective h3{font-size:16px;color:var(--navy);margin-bottom:4px}
+.objective p{font-size:13px;color:var(--muted)}
+
+/* EXPLORE */
+.explore{
+  background:linear-gradient(135deg,#04172f,#0a4d9e);
+  color:#fff;position:relative;overflow:hidden;
+}
+.explore:before{
+  content:"";position:absolute;width:360px;height:360px;border-radius:50%;
+  border:80px solid rgba(255,255,255,.04);right:-130px;top:-130px;
+}
+.explore-inner{position:relative;z-index:2;text-align:center;max-width:780px;margin:auto}
+.explore h2{font-size:clamp(31px,5vw,48px);margin-bottom:10px}
+.explore p{color:#dce7f5}
+.explore .btn{margin-top:24px}
+
+/* FOOTER */
+footer{background:#021126;color:#fff;padding:55px 0 20px}
+.footer-grid{
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:35px;
+}
+footer h3{color:var(--gold);margin-bottom:14px}
+footer p,footer a{font-size:13px;color:#aebbd0}
+footer a{display:block;margin:8px 0;transition:.2s}
+footer a:hover{color:var(--gold);transform:translateX(3px)}
+.contact-line{margin:8px 0}
+.copyright{
+  margin-top:35px;padding-top:18px;border-top:1px solid rgba(255,255,255,.12);
+  text-align:center;color:#8090a8;font-size:12px;
+}
+
+/* REVEAL ANIMATION */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+.reveal.show{opacity:1;transform:none}
+
+/* RESPONSIVE */
+@media(max-width:950px){
+  nav{gap:2px}
+  nav a{padding:9px 8px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .stat:nth-child(2){border-right:0}
+  .about-grid,.mission-grid{grid-template-columns:1fr}
+  .cards,.objective-grid{grid-template-columns:repeat(2,1fr)}
+  .values{grid-template-columns:repeat(3,1fr)}
+  .footer-grid{grid-template-columns:2fr 1fr}
+}
+@media(max-width:700px){
+  .navbar{min-height:70px}
+  .menu{display:block}
+  nav{
+    display:none;position:absolute;left:4%;right:4%;top:70px;
+    flex-direction:column;align-items:stretch;background:var(--navy);
+    padding:12px;border-radius:0 0 15px 15px;box-shadow:0 18px 30px rgba(0,0,0,.25);
+  }
+  nav.open{display:flex}
+  nav a{text-align:center;padding:12px}
+  .hero{min-height:550px}
+  .hero-content{padding:75px 0}
+  .hero h1{font-size:50px;letter-spacing:-1.5px}
+  .hero p{font-size:16px}
+  .stats{width:90%;margin:-30px auto 0}
+  .stat{padding:21px 8px}
+  .stat strong{font-size:24px}
+  section{padding:70px 0}
+  .panel{padding:27px}
+  .cards,.objective-grid,.values,.footer-grid{grid-template-columns:1fr}
+  .footer-grid{gap:27px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="navbar">
+    <a class="logo" href="index.html" aria-label="Access UG Sch home">
+      <div class="logo-mark">A</div>
+      <div>
+        <div class="logo-text">Access <span>UG Sch</span></div>
+        <small class="tagline">DISCOVER • LEARN • SUCCEED</small>
+      </div>
+    </a>
+
+    <button class="menu" id="menuBtn" aria-label="Open menu" aria-expanded="false">☰</button>
+
+    <nav id="nav">
+      <a href="index.html">Home</a>
+      <a href="schools.html">Schools</a>
+      <a class="active" href="about.html">About Us</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="news.html">News</a>
+      <a href="contact.html">Contact</a>
+      <a class="join" href="join.html">Join Us</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="container">
+    <div class="hero-content reveal">
+      <div class="eyebrow">UGANDA'S SCHOOL DISCOVERY PLATFORM</div>
+      <h1>ABOUT US<br><span>ACCESS UG SCH</span></h1>
+      <p>
+        A digital platform designed to make discovering schools, education
+        information, programmes, admissions and opportunities across Uganda easier.
+      </p>
+      <div class="actions">
+        <a class="btn gold" href="#mission">Our Mission</a>
+        <a class="btn ghost" href="schools.html">Explore Schools</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="stats reveal">
+  <div class="stat"><strong>Uganda</strong><span>Our Main Focus</span></div>
+  <div class="stat"><strong>Schools</strong><span>Easy Discovery</span></div>
+  <div class="stat"><strong>Education</strong><span>Information & Opportunities</span></div>
+  <div class="stat"><strong>Digital</strong><span>Simple Access</span></div>
+</div>
+
+<section id="about">
+  <div class="container">
+    <div class="heading reveal">
+      <div class="mini">ABOUT ACCESS UG SCH</div>
+      <h2>Who We Are</h2>
+      <p>Making school discovery simpler for learners, parents and communities.</p>
+    </div>
+
+    <div class="about-grid">
+      <div class="panel feature reveal">
+        <h3>Our Platform</h3>
+        <p>
+          Access UG Sch is a school-focused digital platform created to bring
+          useful education information together in one easy-to-use place.
+          We help users discover schools and learn more about education opportunities.
+        </p>
+        <div class="check-list">
+          <div><span class="check">✓</span><span>Discover schools across Uganda</span></div>
+          <div><span class="check">✓</span><span>Explore useful school information</span></div>
+          <div><span class="check">✓</span><span>Find programmes and opportunities</span></div>
+          <div><span class="check">✓</span><span>Support informed education decisions</span></div>
+        </div>
+      </div>
+
+      <div class="panel reveal">
+        <h3>Why Access UG Sch?</h3>
+        <p>
+          Finding the right school can take time. Access UG Sch is designed to
+          organize school information in a clear, accessible and modern digital platform.
+        </p>
+        <div class="check-list">
+          <div><span class="check">★</span><span>Simple and user-friendly</span></div>
+          <div><span class="check">★</span><span>Education-centered</span></div>
+          <div><span class="check">★</span><span>Responsive on phones and computers</span></div>
+          <div><span class="check">★</span><span>Focused on Uganda's education community</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="mission" id="mission">
+  <div class="container">
+    <div class="heading reveal">
+      <div class="mini">OUR DIRECTION</div>
+      <h2>Mission & Vision</h2>
+      <p>The purpose and future that guide Access UG Sch.</p>
+    </div>
+
+    <div class="mission-grid">
+      <div class="mission-card reveal">
+        <h3>Our Mission</h3>
+        <p>
+          To provide accessible and useful school information that empowers
+          learners, parents and communities to discover schools and make
+          informed education choices.
+        </p>
+      </div>
+      <div class="mission-card reveal">
+        <h3>Our Vision</h3>
+        <p>
+          To become a trusted and innovative school information platform,
+          connecting learners and communities with quality education
+          opportunities in Uganda and beyond.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="heading reveal">
+      <div class="mini">WHAT MAKES US DIFFERENT</div>
+      <h2>Our Focus</h2>
+      <p>What Access UG Sch is built to deliver.</p>
+    </div>
+
+    <div class="cards">
+      <div class="card reveal"><div class="icon">01</div><h3>School Discovery</h3><p>Help users discover schools and explore information about them in one convenient place.</p></div>
+      <div class="card reveal"><div class="icon">02</div><h3>Informed Choices</h3><p>Present useful information that can support learners and parents when considering education options.</p></div>
+      <div class="card reveal"><div class="icon">03</div><h3>Uganda Focus</h3><p>Connect users with schools and education resources from different parts of Uganda.</p></div>
+      <div class="card reveal"><div class="icon">04</div><h3>Community</h3><p>Build a platform useful to learners, parents, teachers, schools and communities.</p></div>
+      <div class="card reveal"><div class="icon">05</div><h3>Innovation</h3><p>Use digital technology to make education information easier to discover and use.</p></div>
+      <div class="card reveal"><div class="icon">06</div><h3>Trust</h3><p>Work toward clear, responsible and dependable education information for our users.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="heading reveal">
+      <div class="mini">OUR PRINCIPLES</div>
+      <h2>Core Values</h2>
+      <p>The principles that guide Access UG Sch.</p>
+    </div>
+
+    <div class="values">
+      <div class="value reveal"><div class="vicon">I</div><h3>Integrity</h3><p>We value honesty and responsibility.</p></div>
+      <div class="value reveal"><div class="vicon">E</div><h3>Excellence</h3><p>We aim for a quality user experience.</p></div>
+      <div class="value reveal"><div class="vicon">A</div><h3>Accessibility</h3><p>We make information easier to find.</p></div>
+      <div class="value reveal"><div class="vicon">T</div><h3>Teamwork</h3><p>We believe in working together.</p></div>
+      <div class="value reveal"><div class="vicon">N</div><h3>Innovation</h3><p>We welcome better digital solutions.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="objectives">
+  <div class="container">
+    <div class="heading reveal">
+      <div class="mini">OUR GOALS</div>
+      <h2>What We Aim To Do</h2>
+      <p>Our key objectives as a school information platform.</p>
+    </div>
+
+    <div class="objective-grid">
+      <div class="objective reveal"><div class="number">1</div><div><h3>Provide School Information</h3><p>Make school information easier for users to discover and understand.</p></div></div>
+      <div class="objective reveal"><div class="number">2</div><div><h3>Connect Learners & Parents</h3><p>Help families discover education options that match their needs.</p></div></div>
+      <div class="objective reveal"><div class="number">3</div><div><h3>Promote Education</h3><p>Support access to useful education resources and opportunities.</p></div></div>
+      <div class="objective reveal"><div class="number">4</div><div><h3>Support Schools</h3><p>Give schools a digital space to become easier to discover.</p></div></div>
+      <div class="objective reveal"><div class="number">5</div><div><h3>Build Partnerships</h3><p>Encourage connections between schools, learners and communities.</p></div></div>
+      <div class="objective reveal"><div class="number">6</div><div><h3>Improve Continuously</h3><p>Keep developing the platform to provide a better school-search experience.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="explore">
+  <div class="container">
+    <div class="explore-inner reveal">
+      <h2>Discover. Learn. Succeed.</h2>
+      <p>
+        Welcome to Access UG Sch — a digital gateway for discovering schools
+        and education opportunities across Uganda.
+      </p>
+      <a class="btn gold" href="schools.html">Explore Schools</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h3>Access UG Sch</h3>
+        <p>A school-focused digital platform helping learners, parents and communities discover education information across Uganda.</p>
+      </div>
+      <div>
+        <h3>Quick Links</h3>
+        <a href="index.html">Home</a>
+        <a href="schools.html">Schools</a>
+        <a href="about.html">About Us</a>
+        <a href="gallery.html">Gallery</a>
+      </div>
+      <div>
+        <h3>Explore</h3>
+        <a href="news.html">Education News</a>
+        <a href="admissions.html">Admissions</a>
+        <a href="contact.html">Contact</a>
+        <a href="join.html">Join Us</a>
+      </div>
+      <div>
+        <h3>Contact</h3>
+        <p class="contact-line">0709030652 / 0762402825</p>
+        <p class="contact-line">ronaldk352@outlook.com</p>
+      </div>
+    </div>
+    <div class="copyright">© 2026 Access UG Sch. All Rights Reserved.</div>
+  </div>
+</footer>
+
+<script>
+const menuBtn = document.getElementById("menuBtn");
+const nav = document.getElementById("nav");
+
+menuBtn.addEventListener("click", () => {
+  nav.classList.toggle("open");
+  const open = nav.classList.contains("open");
+  menuBtn.setAttribute("aria-expanded", open);
+  menuBtn.textContent = open ? "×" : "☰";
+});
+
+document.querySelectorAll("#nav a").forEach(link => {
+  link.addEventListener("click", () => {
+    nav.classList.remove("open");
+    menuBtn.setAttribute("aria-expanded","false");
+    menuBtn.textContent = "☰";
+  });
+});
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting) entry.target.classList.add("show");
+  });
+},{threshold:.12});
+
+document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
