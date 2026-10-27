@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACCESS UG — Student Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+:root{
+ --navy:#061a38;--navy2:#0b3d82;--blue:#1457a6;--bg:#f3f6fb;--text:#13233a;
+ --muted:#6d7b8e;--white:#fff;--border:#e3e9f2;--success:#15966b;
+ --warning:#e7a72d;--danger:#d9534f;--shadow:0 12px 34px rgba(9,35,75,.09);--radius:17px
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+.sidebar{position:fixed;z-index:50;left:0;top:0;bottom:0;width:250px;padding:22px 14px;background:linear-gradient(180deg,var(--navy),#092d63 62%,var(--navy2));color:#fff;transition:.25s;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:12px;padding:4px 10px 28px}.logo{width:44px;height:44px;border-radius:12px;background:#fff;color:var(--blue);display:grid;place-items:center;font-weight:900}
+.brand h1{font-size:17px;margin:0;letter-spacing:.5px}.brand small{opacity:.72}
+.nav{display:grid;gap:7px}.nav button{border:0;background:transparent;color:#dbe7f7;text-align:left;padding:13px 14px;border-radius:11px;display:flex;gap:12px;align-items:center;font-weight:650}
+.nav button:hover,.nav button.active{background:rgba(255,255,255,.13);color:#fff}.nav-icon{width:23px;text-align:center;font-size:18px}
+.sidebar-bottom{position:absolute;left:14px;right:14px;bottom:18px}.logout{width:100%;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;padding:12px;border-radius:11px;font-weight:700}
+.main{margin-left:250px;min-height:100vh}.top{height:72px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:30}
+.title-wrap{display:flex;align-items:center;gap:12px}.top h2{font-size:20px;margin:0}.menu-btn{display:none;border:0;background:#edf3fb;border-radius:10px;width:40px;height:40px}
+.quick-nav{display:flex;gap:7px;margin-left:auto;margin-right:18px}.quick-nav button{border:1px solid var(--border);background:#f5f8fc;color:#285d9e;padding:8px 10px;border-radius:9px;font-size:11px;font-weight:750}.quick-nav button:hover{background:#eaf2fd}.user-mini{display:flex;align-items:center;gap:11px}.avatar{width:38px;height:38px;border-radius:50%;background:#e5eefb;color:var(--blue);display:grid;place-items:center;font-weight:800}.user-mini span{font-size:13px;color:var(--muted)}
+.content{padding:0 28px 30px;max-width:1500px;margin:auto}.page{display:none}.page.active{display:block}
+.hero{margin:0 0 24px;padding:30px 28px 27px;background:linear-gradient(135deg,var(--navy),#0b3d82);color:#fff;position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;width:240px;height:240px;border-radius:50%;right:-70px;top:-120px;background:rgba(255,255,255,.07)}
+.hero h1{margin:0 0 8px;font-size:29px;position:relative;z-index:1}.hero p{margin:0;color:#dbe7f7;position:relative;z-index:1}
+.welcomeHero{padding:34px 28px 32px}.welcomeHero .hi{font-size:18px;margin-bottom:6px}.welcomeHero h1{font-size:32px}.welcomeHero .sub{max-width:700px}
+.grid{display:grid;gap:18px}.two{grid-template-columns:1.25fr .9fr}.three{grid-template-columns:repeat(3,1fr)}
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:21px}.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.card h3{margin:0;font-size:17px}.muted{color:var(--muted);font-size:13px}
+.profile{display:flex;gap:18px;align-items:center}.profile-avatar{width:78px;height:78px;border-radius:20px;background:linear-gradient(135deg,#e9f1fd,#c9dbf5);display:grid;place-items:center;color:var(--blue);font-size:27px;font-weight:900;overflow:hidden;flex:none}.profile-avatar img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;border-radius:inherit}.profile-info h2{margin:0 0 5px;font-size:21px}.profile-info p{margin:3px 0;color:var(--muted)}.profile-card-click{cursor:pointer;transition:transform .16s ease,box-shadow .16s ease}.profile-card-click:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(9,35,75,.08)}.profile-card-click:focus{outline:3px solid rgba(21,87,166,.18);outline-offset:4px}
+.stat{padding:18px}.stat .label{font-size:13px;color:var(--muted)}.stat .value{font-size:28px;font-weight:800;margin-top:6px}.stat .sub{font-size:12px;color:var(--muted);margin-top:4px}.kpi-icon{width:42px;height:42px;border-radius:12px;background:#edf4fd;color:var(--blue);display:grid;place-items:center;font-size:20px}
+.chart-wrap{height:300px;position:relative}.behaviour-chart-scroll{height:300px;overflow-x:auto;overflow-y:hidden;padding-bottom:6px}.behaviour-chart-scroll canvas{display:block;min-width:700px}.chart-small{height:220px}.notification-list{display:grid;gap:10px}.notification{border:1px solid var(--border);border-radius:12px;padding:13px 14px;background:#fff}.notification.unread{background:#eef5ff;border-color:#cfe0f8}.notification .ntop{display:flex;justify-content:space-between;gap:12px}.notification .ntitle{font-weight:800}.notification .nmeta{font-size:11px;color:var(--muted);margin-top:4px}.notification .nmsg{font-size:13px;color:#526176;margin-top:6px;line-height:1.45}.btn{border:0;background:var(--blue);color:#fff;padding:11px 16px;border-radius:10px;font-weight:700}.btn:hover{background:#0a3470}.btn.secondary{background:#eef3f9;color:var(--text)}.btn.danger{background:var(--danger)}
+.notice{padding:12px 14px;border-radius:10px;margin-bottom:16px;font-size:13px;display:none}.notice.show{display:block}.notice.ok{background:#e7f7f0;color:#116d50}.notice.err{background:#fdebea;color:#9d2e29}.notice.info{background:#eaf2fd;color:#174d8f}
+.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:12px}table{border-collapse:collapse;width:100%;min-width:700px;background:#fff}th,td{padding:12px 13px;border-bottom:1px solid var(--border);text-align:left;font-size:13px}th{background:#f7f9fc;color:#536278;font-size:12px;text-transform:uppercase;letter-spacing:.3px}tr:last-child td{border-bottom:0}
+.badge{display:inline-flex;padding:5px 9px;border-radius:99px;font-size:11px;font-weight:800}.badge.present{background:#e7f7f0;color:#117052}.badge.absent{background:#fdebea;color:#a52f2b}.badge.auth{background:#fff4d9;color:#946700}.badge.neutral{background:#edf3fb;color:#285d9e}
+.empty,.loading{text-align:center;padding:35px;color:var(--muted)}.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:18px}.field{display:grid;gap:6px;min-width:190px;flex:1}.field label{font-size:12px;font-weight:700;color:#566579}
+input,select,textarea{width:100%;border:1px solid #d7e0ec;border-radius:10px;padding:11px 12px;background:#fff;color:var(--text);outline:none}textarea{min-height:120px;resize:vertical}
+.interpret{padding:15px;border-radius:13px;background:#f7f9fc;border:1px solid var(--border);line-height:1.55;font-size:13px;color:#526176}.pill-row{display:flex;flex-wrap:wrap;gap:8px}.pill{padding:8px 11px;border-radius:999px;background:#eef3f9;color:#315b8d;font-size:12px;font-weight:700}
+.empty-state{padding:22px;border:1px dashed #cbd7e6;border-radius:13px;color:var(--muted);text-align:center}.fees-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}.fees-summary-stat{padding:17px;border:1px solid var(--border);border-radius:14px;background:#f8faff}.fees-summary-stat .label{font-size:12px;color:var(--muted);font-weight:700}.fees-summary-stat .value{font-size:24px;font-weight:900;margin-top:6px;color:var(--text)}.fees-summary-stat.balance .value{color:#b45309}.fees-summary-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.fees-summary-chip{display:inline-flex;align-items:center;padding:7px 10px;border-radius:999px;background:#edf4fd;color:#285d9e;font-size:12px;font-weight:750}.fees-progress{height:11px;background:#e8eef6;border-radius:999px;overflow:hidden;margin-top:8px}.fees-progress>div{height:100%;width:0;background:#15966b;border-radius:inherit;transition:width .3s ease}.fees-source-note{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.5}@media(max-width:1000px){.fees-summary-grid{grid-template-columns:1fr 1fr}}@media(max-width:750px){.fees-summary-grid{grid-template-columns:1fr 1fr}.fees-summary-stat .value{font-size:20px}}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(4,17,37,.45);z-index:45}.overlay.show{display:block}
+.toast{position:fixed;right:20px;bottom:20px;z-index:100;background:#13233a;color:#fff;padding:13px 16px;border-radius:11px;box-shadow:var(--shadow);display:none;max-width:380px}.toast.show{display:block}
+.grade{font-size:22px;font-weight:900;color:var(--blue)}.final{font-weight:900}.section-note{margin:0 0 14px;color:var(--muted);font-size:13px}
+@media(max-width:1000px){.three{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}}
+@media(max-width:750px){.quick-nav{display:flex;overflow-x:auto;max-width:55vw;margin-right:8px}.quick-nav button{white-space:nowrap;padding:7px 8px;font-size:10px}.sidebar{transform:translateX(-100%);width:240px}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.menu-btn{display:grid;place-items:center}.top{padding:0 15px}.user-mini span{display:none}.content{padding:0 16px 24px}.hero{margin:0 0 20px;padding:26px 16px}.welcomeHero h1{font-size:27px}.three{grid-template-columns:1fr}.profile{align-items:flex-start}.profile-info{min-width:0}.card{padding:17px}.toolbar .field{min-width:100%}.toolbar .btn{width:100%}}
+/* Mobile layout hardening: keep the student portal inside the phone viewport. */
+@media(max-width:750px){
+ html,body{width:100%;max-width:100%;overflow-x:hidden}
+ .main{width:100%;min-width:0}
+ .top{width:100%;min-width:0;gap:10px;overflow:hidden}
+ .title-wrap{min-width:0;flex:1}
+ .top h2{min-width:0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .quick-nav{display:none!important}
+ .user-mini{flex:none}
+ .content{width:100%;min-width:0;max-width:none}
+ .page,.card,.hero{min-width:0;max-width:100%}
+ .profile-modal{padding:12px}
+ .profile-modal-card{width:calc(100vw - 24px);max-width:470px;max-height:calc(100vh - 24px);padding:18px;border-radius:18px}
+ .profile-hero{flex-wrap:wrap}
+ .profile-hero>div:last-child{min-width:0;flex:1}
+ .profile-readonly strong{max-width:60%;overflow-wrap:anywhere}
+ .profile-crop-modal{padding:12px}
+ .profile-crop-card{width:calc(100vw - 24px);max-width:560px;padding:16px;border-radius:18px}
+}
+
+
+/* Report-only styling. */
+.official-school-report{background:#fff;position:relative;border:1px solid #cbd6e3;max-width:1100px;margin:0 auto 18px;padding:24px;color:#182b43}
+.official-school-report .report-print-actions{display:flex;justify-content:flex-end;margin-bottom:8px}
+.school-report-header{text-align:center;border-bottom:1px solid #b9c5d3;padding-bottom:14px;margin-bottom:14px}
+.school-report-name{font-weight:900;font-size:20px;letter-spacing:.3px}.school-motto{font-weight:700;margin-top:2px}.report-title{display:inline-block;margin-top:10px;padding:5px 34px;border:1px solid #68788c;border-radius:12px;font-weight:900;letter-spacing:.5px}
+.report-student-row{display:flex;gap:16px;align-items:flex-start;margin-bottom:14px}.report-student-grid{flex:1;display:grid;grid-template-columns:repeat(3,minmax(130px,1fr));border:1px solid #cbd6e3}.report-student-grid>div{padding:8px 10px;border-right:1px solid #d8e0e8;border-bottom:1px solid #d8e0e8}.report-student-grid span,.report-summary-row span,.report-mini-grid span{display:block;font-size:10px;text-transform:uppercase;color:#617087;font-weight:800}.report-student-grid strong{display:block;margin-top:3px}.report-photo{width:82px;flex:none}
+.report-section-label{font-weight:900;background:#eef3f8;border:1px solid #cbd6e3;padding:6px 9px;margin-top:12px}.report-table table,.grading-table,.report-behaviour-table table{width:100%;border-collapse:collapse}.report-table th,.report-table td,.grading-table th,.grading-table td,.report-behaviour-table th,.report-behaviour-table td{border:1px solid #cbd6e3;padding:6px 7px;font-size:11px}.report-table th,.grading-table th,.report-behaviour-table th{font-weight:900;background:#f6f8fa}.report-summary-row{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #cbd6e3;margin-top:8px}.report-summary-row>div{padding:8px;border-right:1px solid #d8e0e8}.report-summary-row strong{display:block;font-size:15px;margin-top:2px}.report-mini-grid{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #cbd6e3;border-top:0}.report-mini-grid>div{padding:8px;border-right:1px solid #d8e0e8}.report-mini-grid strong{display:block;margin-top:3px}.report-mini-grid .positive{color:#1457a6}.report-mini-grid .negative{color:#b42318}.report-remarks{display:grid;grid-template-columns:1fr 1fr;border:1px solid #cbd6e3;border-top:0}.report-remarks>div{padding:10px;border-right:1px solid #d8e0e8;min-height:52px;font-size:11px}.report-remarks>div:last-child{border-right:0}.report-remarks div div{margin-top:6px;line-height:1.4}.report-footer{display:grid;gap:4px;margin-top:12px;font-size:11px}.report-footer .muted{margin-top:5px}
+@media(max-width:700px){.official-school-report{padding:14px}.report-student-row{flex-direction:column-reverse}.report-student-grid{width:100%;grid-template-columns:repeat(2,minmax(120px,1fr))}.report-photo{align-self:flex-end}.report-summary-row{grid-template-columns:repeat(2,1fr)}.report-mini-grid{grid-template-columns:repeat(2,1fr)}.report-remarks{grid-template-columns:1fr}.report-remarks>div{border-right:0;border-bottom:1px solid #d8e0e8}.report-table,.report-behaviour-table{overflow-x:auto}.report-table table{min-width:760px}.report-behaviour-table table{min-width:620px}}
+</style>
+
+<style id="accessug-profile-system">
+.profile-trigger{border:0;background:transparent;padding:0;display:flex;align-items:center;gap:10px;cursor:pointer;color:inherit;text-align:left}
+.profile-trigger .avatar{position:relative;overflow:hidden;flex:none}
+.profile-trigger .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.profile-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(4,18,42,.56);backdrop-filter:blur(7px);align-items:center;justify-content:center;padding:18px}
+.profile-modal.show{display:flex}
+.profile-modal-card{width:min(470px,100%);max-height:92vh;overflow:auto;background:#fff;border:1px solid #dce5f2;border-radius:22px;box-shadow:0 30px 90px rgba(5,25,60,.28);padding:24px}
+.profile-modal-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:20px}
+.profile-modal-head h3{margin:0;color:#102a50;font-size:20px}
+.profile-close{width:36px;height:36px;border:0;border-radius:10px;background:#eef3f9;color:#314766;font-size:20px;cursor:pointer}
+.profile-hero{display:flex;align-items:center;gap:16px;padding:16px;border:1px solid #e2e9f3;border-radius:16px;background:#f8faff;margin-bottom:18px}
+.profile-photo{width:76px;height:76px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#eaf2ff,#cdddf6);display:grid;place-items:center;color:#1558b0;font-weight:900;font-size:24px;flex:none}
+.profile-photo img{width:100%;height:100%;object-fit:cover}
+.profile-hero h4{margin:0 0 5px;font-size:17px;color:#132d52}
+.profile-hero p{margin:3px 0;color:#73829a;font-size:12px}
+.profile-readonly{display:grid;gap:9px;margin-bottom:18px}
+.profile-readonly div{display:flex;justify-content:space-between;gap:16px;padding:10px 12px;border-radius:10px;background:#f7f9fc}
+.profile-readonly span{color:#718096;font-size:12px}
+.profile-readonly strong{color:#203a5f;font-size:12px;text-align:right;word-break:break-word}
+.profile-actions{display:flex;gap:9px;flex-wrap:wrap}
+.profile-actions .pbtn{border:0;border-radius:10px;padding:10px 13px;font-weight:750;font-size:12px;cursor:pointer}
+.pbtn.primary{background:#1559b7;color:#fff}.pbtn.secondary{background:#edf3fa;color:#233b5d}.pbtn.danger{background:#fff0ef;color:#a8322e}
+.profile-divider{height:1px;background:#e8edf4;margin:20px 0}
+.profile-modal label{display:block;color:#405673;font-size:12px;font-weight:750;margin:0 0 6px}
+.profile-modal input{width:100%;border:1px solid #d7e0ec;border-radius:10px;padding:11px 12px;outline:none}
+.profile-modal input:focus{border-color:#4b82cf;box-shadow:0 0 0 3px rgba(40,100,190,.1)}
+.profile-password-grid{display:grid;gap:10px}
+.profile-status{min-height:18px;margin-top:9px;font-size:12px;color:#65758b}
+.profile-status.error{color:#a8322e}.profile-status.ok{color:#117052}
+.profile-crop-modal{display:none;position:fixed;inset:0;z-index:10050;background:rgba(4,18,42,.72);backdrop-filter:blur(9px);align-items:center;justify-content:center;padding:16px}
+.profile-crop-modal.show{display:flex}
+.profile-crop-card{width:min(560px,100%);background:#fff;border-radius:24px;padding:20px;box-shadow:0 30px 100px rgba(0,0,0,.3)}
+.profile-crop-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.profile-crop-head h3{margin:0;color:#102a50;font-size:19px}
+.profile-crop-stage{width:min(420px,88vw);height:min(420px,88vw);margin:0 auto 16px;position:relative;border-radius:18px;overflow:hidden;background:#0d1d33;display:grid;place-items:center}
+.profile-crop-stage canvas{width:100%;height:100%;display:block;touch-action:none}
+.profile-crop-guide{position:absolute;inset:10%;border:2px solid rgba(255,255,255,.92);border-radius:50%;box-shadow:0 0 0 999px rgba(0,0,0,.28);pointer-events:none}
+.profile-crop-controls{display:grid;gap:10px}
+.profile-crop-controls label{font-size:12px;font-weight:750;color:#405673}
+.profile-crop-controls input[type=range]{width:100%}
+.profile-crop-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:14px}
+.profile-crop-actions button{border:0;border-radius:10px;padding:10px 14px;font-weight:750;cursor:pointer}
+.profile-crop-cancel{background:#edf3fa;color:#233b5d}.profile-crop-save{background:#1559b7;color:#fff}
+.profile-photo img,.profile-trigger .avatar img{object-fit:cover;object-position:center;display:block;width:100%;height:100%}
+.behaviour-positive{color:#1457a6;font-weight:900}.behaviour-negative{color:#d9534f;font-weight:900}
+</style>
+<style id="accessug-student-palette">
+:root{--navy:#061a38;--navy2:#0b3d82;--blue:#1457a6;--bg:#f3f6fb;--text:#13233a;--muted:#6d7b8e;--white:#fff}
+.hero{background:linear-gradient(135deg,var(--navy),var(--navy2))!important;color:#fff!important}
+.hero h1,.hero .sub,.hero p,.welcomeHero .hi{color:#fff!important}
+.sidebar{background:linear-gradient(180deg,var(--navy),#092d63 62%,var(--navy2))!important}
+.btn{background:var(--blue)!important;color:#fff!important}
+.btn:hover{background:#0a3470!important}
+</style>
+<style id="accessug-profile-polish">.profile-modal-card{line-height:1.45}.profile-actions{margin-top:8px}.profile-actions .pbtn{min-height:40px;padding:11px 15px;font-size:13px;letter-spacing:.1px}.profile-modal input{min-height:43px}.profile-divider{margin:22px 0}.profile-password-grid{gap:12px}.profile-status{line-height:1.5}.profile-modal .pbtn:focus-visible{outline:3px solid rgba(21,89,183,.25);outline-offset:2px}@media(max-width:480px){.profile-actions .pbtn{flex:1 1 auto}.profile-readonly div{align-items:flex-start}.profile-readonly strong{max-width:58%}}</style></head>
+<body>
+<aside class="sidebar" id="sidebar">
+ <div class="brand"><div class="logo">AU</div><div><h1>ACCESS UG</h1><small>Student Portal</small></div></div>
+ <nav class="nav">
+  <button class="active" data-page="home"><span class="nav-icon">⌂</span>Home</button>
+  <button data-page="attendance"><span class="nav-icon">◷</span>Attendance</button>
+  <button data-page="behaviour"><span class="nav-icon">★</span>Behaviour</button>
+  <button data-page="results"><span class="nav-icon">▣</span>Results</button>
+  <button data-page="assessments"><span class="nav-icon">▤</span>Assessments</button>
+  <button data-page="endterm"><span class="nav-icon">▥</span>End of Term</button>
+  <button data-page="fees"><span class="nav-icon">▤</span>Fees</button>
+  <button data-page="inbox"><span class="nav-icon">✉</span>Inbox <span id="inboxBadge" style="margin-left:auto;display:none;background:#fff;color:#1457a6;border-radius:999px;padding:2px 7px;font-size:10px">0</span></button>
+   <button data-page="reports"><span class="nav-icon">⚠</span>Report an Issue</button>
+ </nav>
+ <div class="sidebar-bottom"><button class="logout" id="logoutBtn">↪ &nbsp; Log out</button></div>
+</aside>
+
+<div class="overlay" id="overlay"></div>
+<main class="main">
+<header class="top">
+ <div class="title-wrap"><button class="menu-btn" id="menuBtn" aria-label="Open student menu">☰</button><h2 id="pageTitle">Student Dashboard</h2></div>
+  <div class="quick-nav" aria-label="Quick navigation">
+   <button data-quick="home">Home</button><button data-quick="attendance">Attendance</button><button data-quick="behaviour">Behaviour</button><button data-quick="results">Results</button>
+  </div>
+ <div class="user-mini"><span id="topEmail">Loading...</span><button class="profile-trigger" id="profileTrigger" type="button" aria-label="Open profile"><div class="avatar" id="topAvatar">S</div></button></div>
+</header>
+
+<div class="content">
+<section id="home" class="page active">
+ <div class="hero welcomeHero">
+  <div class="hi">👋 Hi!</div>
+  <h1 id="welcome">Welcome</h1>
+  <p class="sub">Your ACCESS UG learning overview. Your academic records below are read directly from the records entered by your teachers.</p>
+ </div>
+ <div id="homeNotice" class="notice"></div>
+ <div class="grid two">
+  <div class="card">
+   <div class="card-head"><div><h3>My Profile</h3><div class="muted">Your registered ACCESS UG student profile</div></div><span class="badge neutral">Student</span></div>
+   <div class="profile profile-card-click" id="profileCardClick" role="button" tabindex="0" aria-label="Open profile settings"><div class="profile-avatar" id="profileAvatar">S</div><div class="profile-info"><h2 id="studentName">Loading...</h2><p id="studentClass">Class: —</p><p id="studentSchool">School: —</p><p id="studentEmail">Email: —</p></div></div>
+  </div>
+  <div class="card">
+   <div class="card-head"><div><h3>Attendance Overview</h3><div class="muted">Teacher-recorded attendance</div></div></div>
+   <div class="chart-wrap chart-small"><canvas id="homeAttendanceChart"></canvas></div>
+  </div>
+ </div>
+ <div class="grid three" style="margin-top:18px">
+  <div class="card stat"><div class="kpi-icon">✓</div><div class="label">Present</div><div class="value" id="homePresent">—</div><div class="sub" id="homePresentPct">—</div></div>
+  <div class="card stat"><div class="kpi-icon">!</div><div class="label">Absent</div><div class="value" id="homeAbsent">—</div><div class="sub" id="homeAbsentPct">—</div></div>
+  <div class="card stat"><div class="kpi-icon">◎</div><div class="label">Authorized absence</div><div class="value" id="homeAuthorized">—</div><div class="sub" id="homeAuthorizedPct">—</div></div>
+ </div>
+ <div class="grid two" style="margin-top:18px">
+  <div class="card">
+   <div class="card-head"><div><h3>Behaviour Progress</h3><div class="muted">Positive points go up • negative points go down • one combined bar per week</div></div></div>
+   <div class="behaviour-chart-scroll"><canvas id="homeBehaviourChart"></canvas></div>
+  </div>
+  <div class="card">
+   <div class="card-head"><div><h3>Guidance</h3><div class="muted">How to read your overview</div></div></div>
+   <div class="interpret">
+    <p><strong>Attendance:</strong> Present, absent and authorized absence are shown separately so approved absence is not treated the same as an ordinary absence.</p>
+    <p><strong>Behaviour:</strong> Weekly results reflect the grades and points recorded by your teacher. They are a progress indicator and should be read together with teacher comments.</p>
+    <p><strong>Results:</strong> A subject appears in your results only after a teacher has entered a mark for it.</p>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="attendance" class="page">
+ <div class="hero"><h1>Attendance</h1><p>Your complete teacher-recorded attendance summary.</p></div>
+ <div id="attendanceNotice" class="notice"></div>
+ <div class="grid two">
+  <div class="card"><div class="card-head"><div><h3>Attendance Breakdown</h3><div class="muted">All available attendance records</div></div></div><div class="chart-wrap"><canvas id="attendanceChart"></canvas></div></div>
+  <div class="card"><div class="card-head"><div><h3>Attendance Interpretation</h3><div class="muted">Your current record</div></div></div><div id="attendanceInterpret" class="interpret">Loading...</div></div>
+ </div>
+ <div class="grid three" style="margin-top:18px">
+  <div class="card stat"><div class="label">Attended</div><div class="value" id="attPresent">0</div><div class="sub" id="attPresentPct">0%</div></div>
+  <div class="card stat"><div class="label">Absent</div><div class="value" id="attAbsent">0</div><div class="sub" id="attAbsentPct">0%</div></div>
+  <div class="card stat"><div class="label">Authorized absence</div><div class="value" id="attAuthorized">0</div><div class="sub" id="attAuthorizedPct">0%</div></div>
+ </div>
+</section>
+
+<section id="behaviour" class="page">
+ <div class="hero"><h1>Behaviour</h1><p>Track every behaviour event over time. Positive points rise above zero and negative points fall below zero, with both recorded in the same weekly bar.</p></div>
+ <div id="behaviourNotice" class="notice"></div>
+ <div class="grid two">
+  <div class="card"><div class="card-head"><div><h3>Behaviour Progress</h3><div class="muted">Positive points go up • negative points go down • one combined bar per week</div></div></div><div class="behaviour-chart-scroll"><canvas id="behaviourChart"></canvas></div></div>
+  <div class="card"><div class="card-head"><div><h3>Behaviour Summary</h3><div class="muted">Recorded grades and points</div></div></div><div id="behaviourSummary" class="empty">Loading...</div></div>
+ </div>
+ <div class="card" style="margin-top:18px"><div class="card-head"><div><h3>Behaviour Records</h3><div class="muted">Teacher comments are shown when recorded.</div></div></div><div id="behaviourTable" class="empty">Loading...</div></div>
+</section>
+
+<section id="assessments" class="page">
+ <div class="hero"><h1>Assessments</h1><p>Continuous assessment results entered by your teachers, out of 20.</p></div>
+ <div id="assessmentNotice" class="notice"></div>
+ <div class="card"><div class="card-head"><div><h3>Recorded Assessment Results</h3><div class="muted">Subjects without a recorded mark are not displayed.</div></div></div><div id="assessmentTable" class="empty">Loading...</div></div>
+</section>
+
+<section id="endterm" class="page">
+ <div class="hero"><h1>End of Term</h1><p>Combined assessment and end-of-term results, calculated out of 100.</p></div>
+ <div id="endtermNotice" class="notice"></div>
+ <div class="card"><div class="card-head"><div><h3>Final Results</h3><div class="muted">Assessment /20 + End Term /80 = Final /100</div></div></div><div id="endtermTable" class="empty">Loading...</div></div>
+</section>
+
+<section id="fees" class="page">
+ <div class="hero welcomeHero feesHero"><div class="hi">👋 <span id="feesGreeting">Hi!</span></div><h1 id="feesHeroTitle">Your Fees Standings</h1><p class="sub" id="feesHeroSub">These are your fees standings at your school.</p></div>
+ <div id="feesNotice" class="notice"></div>
+ <div class="card">
+  <div class="card-head"><div><h3>My Fees Account</h3><div class="muted">These figures come directly from the fee structure and payments recorded by your school.</div></div><span id="feesYearChip" class="fees-summary-chip">Academic year —</span></div>
+  <div id="feesSummaryBody"><div class="loading">Loading fees…</div></div>
+ </div>
+</section>
+
+<section id="results" class="page">
+ <div class="hero"><h1>Results</h1><p>Your official ACCESS UG assessment and end-of-term reports.</p></div>
+ <div id="resultsNotice" class="notice"></div>
+ <div class="card" style="margin-bottom:18px">
+  <div class="card-head"><div><h3>Report availability</h3><div class="muted">Reports are created automatically when the required subject results are complete.</div></div>
+   <select id="resultsTerm" class="input" style="max-width:220px"></select>
+  </div>
+  <div class="grid two">
+   <div class="card" style="box-shadow:none;border:1px solid #dbe5f0"><div class="muted">Assessment report</div><h2 id="assessmentReportStatus">Checking…</h2><div id="assessmentReportMeta" class="muted">Requires 9 recorded assessment subjects.</div></div>
+   <div class="card" style="box-shadow:none;border:1px solid #dbe5f0"><div class="muted">End-of-term report</div><h2 id="endReportStatus">Checking…</h2><div id="endReportMeta" class="muted">Requires 9 assessment + 9 end-term subjects.</div></div>
+  </div>
+ </div>
+ <div id="resultReportList"></div>
+</section>
+<section id="inbox" class="page">
+  <div class="hero"><h1>Inbox</h1><p>Your ACCESS UG notifications and important updates.</p></div>
+  <div id="inboxNotice" class="notice"></div>
+  <div class="card">
+   <div class="card-head"><div><h3>Notifications</h3><div class="muted">Updates from your school and teachers.</div></div><button class="btn secondary" id="markAllRead">Mark all as read</button></div>
+   <div id="inboxList" class="empty">Loading...</div>
+  </div>
+ </section>
+
+ <section id="reports" class="page">
+ <div class="hero"><h1>Report an Issue</h1><p>Send a concern or issue to the school through ACCESS UG.</p></div>
+ <div id="reportNotice" class="notice"></div>
+ <div class="card">
+  <div class="field"><label>Issue type</label><select id="reportType"><option value="attendance_issue">Attendance issue</option><option value="academic_issue">Academic issue</option><option value="behaviour_issue">Behaviour issue</option><option value="absence">Absence</option><option value="other">Other</option></select></div>
+  <div class="field" style="margin-top:16px"><label>Subject / short title</label><input id="reportSubject" placeholder="e.g. Attendance recorded incorrectly"></div>
+  <div class="field" style="margin-top:16px"><label>Message</label><textarea id="reportDescription" placeholder="Explain the problem clearly..."></textarea></div>
+  <div class="actions" style="display:flex;justify-content:flex-end;margin-top:16px"><button class="btn" id="submitReport">Send Report</button></div>
+ </div>
+ <div class="card" style="margin-top:18px"><div class="card-head"><div><h3>My Reports</h3><div class="muted">Reports submitted from your student account</div></div></div><div id="reportsTable" class="empty">Loading...</div></div>
+</section>
+</div>
+</main>
+<div class="toast" id="toast"></div>
+
+
+<div class="profile-modal" id="profileModal" aria-hidden="true">
+  <div class="profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+    <div class="profile-modal-head">
+      <h3 id="profileModalTitle">My Profile</h3>
+      <button class="profile-close" id="profileClose" type="button" aria-label="Close">×</button>
+    </div>
+    <div class="profile-hero">
+      <div class="profile-photo" id="profilePhoto">S</div>
+      <div>
+        <h4 id="profileModalName">Loading…</h4>
+        <p id="profileModalEmail">Loading…</p>
+        <p id="profileModalSchool">Loading…</p>
+      </div>
+    </div>
+    <div class="profile-readonly">
+      <div><span>Name</span><strong id="profileReadName">—</strong></div>
+      <div><span>School</span><strong id="profileReadSchool">—</strong></div>
+      <div><span>Email</span><strong id="profileReadEmail">—</strong></div>
+    </div>
+    <div class="profile-actions">
+      <button class="pbtn primary" id="uploadProfileBtn" type="button">Upload photo</button>
+      <button class="pbtn secondary" id="removeProfileBtn" type="button">Remove photo</button>
+      <input id="profileFileInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+    </div>
+    <div class="profile-divider"></div>
+    <div class="profile-password-grid">
+      <div><label for="newPassword">New password</label><input id="newPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Enter new password"></div>
+      <div><label for="confirmPassword">Confirm password</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Confirm new password"></div>
+      <button class="pbtn primary" id="changePasswordBtn" type="button">Update password</button>
+    </div>
+    <div class="profile-status" id="profileStatus" role="status"></div>
+  </div>
+</div>
+
+<div class="profile-crop-modal" id="profileCropModal" aria-hidden="true">
+  <div class="profile-crop-card" role="dialog" aria-modal="true" aria-labelledby="profileCropTitle">
+    <div class="profile-crop-head">
+      <h3 id="profileCropTitle">Position your profile photo</h3>
+      <button class="profile-close" id="profileCropClose" type="button" aria-label="Close">×</button>
+    </div>
+    <div class="profile-crop-stage" id="profileCropStage">
+      <canvas id="profileCropCanvas" width="420" height="420"></canvas>
+      <div class="profile-crop-guide"></div>
+    </div>
+    <div class="profile-crop-controls">
+      <label for="profileZoom">Zoom — drag the photo inside the circle</label>
+      <input id="profileZoom" type="range" min="0.5" max="3.5" step="0.01" value="1">
+    </div>
+    <div class="profile-crop-actions">
+      <button class="profile-crop-cancel" id="profileCropCancel" type="button">Cancel</button>
+      <button class="profile-crop-save" id="profileCropSave" type="button">Save photo</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+<script>
+const SUPABASE_URL="https://iotmozwesvmieqvsonov.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_4dKiWSMcl6wCe5Nn6m0mcQ_Vi8HiSZZ";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+window.supabaseClient=supabaseClient;
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+let authUser=null,student=null,attendance=[],behaviour=[],assessments=[],endResults=[],feeSummary=null;
+let charts={};
+
+function notice(id,text,type="info"){const e=$(id);e.textContent=text;e.className="notice show "+type}
+function toast(text){const e=$("toast");e.textContent=text;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),3500)}
+function studentName(s){return [s.first_name,s.last_name].filter(Boolean).join(" ")||s.full_name||s.name||"Student"}
+function initials(s){return studentName(s).split(/\s+/).map(x=>x[0]).join("").slice(0,2).toUpperCase()||"S"}
+function pct(n,total){return total?((n/total)*100).toFixed(1)+"%":"0%"}
+function updateFeesHero(isParent, schoolName){
+  const name=studentName(student);
+  const school=String(schoolName||student?.school||student?.school_name||"your school").trim();
+  if($("feesGreeting")) $("feesGreeting").textContent=isParent ? "Hi parents," : "Hi, "+name+"!";
+  if($("feesHeroTitle")) $("feesHeroTitle").textContent=isParent ? "Viewing "+name+"'s Fees Standings" : "Your Fees Standings";
+  if($("feesHeroSub")) $("feesHeroSub").textContent=isParent ? "These are "+name+"'s fees standings at "+school+"." : "These are your fees standings at "+school+".";
+}
+function destroyChart(k){if(charts[k]){charts[k].destroy();charts[k]=null}}
+
+async function init(){
+  try{
+    const {data:{session},error}=await supabaseClient.auth.getSession();
+    if(error||!session){location.replace('./index.html');return}
+    authUser=session.user;
+    const email=(authUser.email||'').trim().toLowerCase();
+    const storedParentEmail=(localStorage.getItem('accessug_parent_email')||'').trim().toLowerCase();
+    const parentMode=localStorage.getItem('accessug_parent_mode')==='true' && !!storedParentEmail && storedParentEmail===email;
+    const storedStudentId=localStorage.getItem('accessug_student_id');
+    let r;
+
+    // Normal student login: locate the student by their own email.
+    // Parent login: locate the already-authorized child by stored student id,
+    // then verify that the authenticated parent email matches students.parent_email.
+    if(parentMode && storedStudentId){
+      r=await supabaseClient.from('students').select('*').eq('id',storedStudentId).maybeSingle();
+      if(r.error) throw r.error;
+      if(!r.data){
+        await supabaseClient.auth.signOut();
+        throw new Error('The linked student record could not be found.');
+      }
+      const parentEmail=String(r.data.parent_email||'').trim().toLowerCase();
+      if(!parentEmail || parentEmail!==email){
+        await supabaseClient.auth.signOut();
+        localStorage.removeItem('accessug_parent_mode');
+        throw new Error('This parent account is not linked to the selected student.');
+      }
+    }else{
+      // Clear stale parent state when the authenticated account is a normal student.
+      localStorage.removeItem('accessug_parent_mode');
+      localStorage.removeItem('accessug_parent_email');
+      localStorage.removeItem('accessug_parent_id');
+      r=await supabaseClient.from('students').select('*').ilike('email',email).limit(2);
+      if(r.error) throw r.error;
+      if(!r.data?.length){
+        const legacy=await supabaseClient.from('students').select('*').ilike('student_email',email).limit(2);
+        if(legacy.error) throw legacy.error;
+        r.data=legacy.data||[];
+      }
+      if(!r.data?.length){await supabaseClient.auth.signOut();alert('ACCESS UG: This signed-in email is not linked to a student record.');location.replace('./index.html');return}
+      if(r.data.length>1){await supabaseClient.auth.signOut();alert('This email is linked to more than one student. A unique student email is required.');location.replace('./index.html');return}
+      r.data=r.data[0];
+    }
+    student=r.data;
+    // Render identity immediately; secondary data loads independently.
+    $('topEmail').textContent=authUser.email||student.email||student.student_email||'';
+    const initialAvatarUrl=String(student.profile_photo_url||authUser.user_metadata?.avatar_url||'');
+    const avatarHtml=initialAvatarUrl ? '<img src="'+esc(initialAvatarUrl)+'" alt="Profile photo" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit">' : initials(student);
+    $('topAvatar').innerHTML=avatarHtml;
+    $('profileAvatar').innerHTML=avatarHtml;
+    $('studentName').textContent=studentName(student);
+    $('welcome').textContent=(parentMode?'Hi, Parent — viewing '+studentName(student)+'.':'Hi, '+studentName(student)+'.');
+    $('studentEmail').textContent='Student email: '+(student.email||student.student_email||authUser.email||'—');
+    let classText=student.class_level||student.class||'—';
+    let schoolText=student.school||String(student.school_id||'—');
+    if(student.class_id){
+      supabaseClient.from('classes').select('id,name,level,stream').eq('id',student.class_id).maybeSingle().then(x=>{
+        if(!x.error&&x.data){classText=x.data.name||[x.data.level,x.data.stream].filter(Boolean).join(' ')||classText;$('studentClass').textContent='Class: '+classText;}
+      });
+    }
+    if(student.school_id){
+      supabaseClient.from('schools').select('id,name').eq('id',student.school_id).maybeSingle().then(x=>{
+        if(!x.error&&x.data){schoolText=x.data.name||schoolText;$('studentSchool').textContent='School: '+schoolText;}
+      });
+    }
+    $('studentClass').textContent='Class: '+classText;
+    $('studentSchool').textContent='School: '+schoolText;
+    updateFeesHero(parentMode, schoolText);
+    window.dispatchEvent(new Event('accessug:student-ready'));
+    // Load sections independently so one slow/erroring query never freezes the dashboard.
+    const jobs=[window.loadAttendance,window.loadBehaviour,window.loadAssessments,window.loadEndTerm,window.loadFees,window.loadReports,window.loadInbox];
+    await Promise.allSettled(jobs.map(fn=>fn()));
+  }catch(error){
+    console.error('ACCESS UG student initialization error:',error);
+    notice('homeNotice','Student dashboard could not initialize: '+(error?.message||String(error)),'err');
+  }
+}
+
+window.loadAttendance = async function loadAttendance(){
+ const {data,error}=await supabaseClient.from("student_attendance").select("*").eq("student_id",student.id).order("attendance_date",{ascending:true});
+ if(error){notice("attendanceNotice","Could not load attendance: "+error.message,"err");return}
+ attendance=data||[];
+ const c={present:0,absent:0,authorized_absence:0};
+ attendance.forEach(r=>{if(c[r.status]!==undefined)c[r.status]++});
+ renderAttendance(c);
+}
+function renderAttendance(c){
+ const total=c.present+c.absent+c.authorized_absence;
+ // GO 4 Schools-style attendance calculation:
+ // Attendance is Present sessions divided by all possible sessions.
+ // Authorised absence remains separate and is NOT added to Attendance.
+ const attendanceRate=total?(c.present/total)*100:0;
+ const presentPct=total?(c.present/total)*100:0;
+ const absentPct=total?(c.absent/total)*100:0;
+ const authPct=total?(c.authorized_absence/total)*100:0;
+
+ const attendanceCenterPlugin={
+   id:"accessAttendanceCenter",
+   afterDraw(chart){
+     const area=chart.chartArea;
+     if(!area)return;
+     const ctx=chart.ctx;
+     const x=(area.left+area.right)/2, y=(area.top+area.bottom)/2;
+     ctx.save();
+     ctx.textAlign="center";ctx.textBaseline="middle";
+     ctx.font="800 27px Inter, system-ui, sans-serif";
+     ctx.fillStyle="#13233a";
+     ctx.fillText(attendanceRate.toFixed(0)+"%",x,y-5);
+     ctx.font="600 10px Inter, system-ui, sans-serif";
+     ctx.fillStyle="#6d7b8e";
+     ctx.fillText("attendance",x,y+18);
+     ctx.restore();
+   }
+ };
+
+ ["homeAttendanceChart","attendanceChart"].forEach((id,i)=>{
+  const key=i?"attendance":"homeAttendance";
+  destroyChart(key);
+  charts[key]=new Chart($(id),{
+   type:"doughnut",
+   data:{
+    labels:["Present","Absent","Authorized absence"],
+    datasets:[{data:[c.present,c.absent,c.authorized_absence]}]
+   },
+   options:{
+    responsive:true,maintainAspectRatio:false,cutout:"70%",
+    plugins:{legend:{position:"bottom"}}
+   },
+   plugins:[attendanceCenterPlugin]
+  });
+ });
+
+ $("homePresent").textContent=c.present;$("homeAbsent").textContent=c.absent;$("homeAuthorized").textContent=c.authorized_absence;
+ $("homePresentPct").textContent=attendanceRate.toFixed(1)+"% attendance rate";
+ $("homeAbsentPct").textContent=absentPct.toFixed(1)+"% of records";
+ $("homeAuthorizedPct").textContent=authPct.toFixed(1)+"% of records";
+
+ $("attPresent").textContent=c.present;$("attAbsent").textContent=c.absent;$("attAuthorized").textContent=c.authorized_absence;
+ $("attPresentPct").textContent=attendanceRate.toFixed(1)+"% attendance rate";
+ $("attAbsentPct").textContent=absentPct.toFixed(1)+"% of records";
+ $("attAuthorizedPct").textContent=authPct.toFixed(1)+"% of records";
+
+ $("attendanceInterpret").innerHTML=total?`
+   <p><strong>${attendanceRate.toFixed(1)}%</strong> overall attendance.</p>
+   <p><strong>${c.present}</strong> attendance record${c.present===1?"":"s"} count as attended out of <strong>${total}</strong> possible session${total===1?"":"s"}.</p>
+   <p><strong>${c.authorized_absence}</strong> authorised absence record${c.authorized_absence===1?"":"s"} are shown separately and are not counted as attendance.</p>
+   <p><strong>${c.absent}</strong> ordinary absence record${c.absent===1?"":"s"} reduce the attendance rate.</p>
+ `:`<p>No attendance records have been entered for you yet.</p>`;
+}
+
+window.loadBehaviour = async function loadBehaviour(){
+  let r=await supabaseClient.from('behaviour_records').select('*').eq('student_id',student.id).order('created_at',{ascending:true});
+  if(r.error){notice('behaviourNotice','Could not load behaviour: '+r.error.message,'err');return}
+  behaviour=r.data||[];
+  renderBehaviour();
+}
+function weekKey(date){
+  // Calendar-safe Monday week key. Use UTC so the device timezone cannot
+  // move a date backwards/forwards and accidentally split one week.
+  const m=String(date||"").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(!m)return null;
+  const d=new Date(Date.UTC(Number(m[1]),Number(m[2])-1,Number(m[3])));
+  const day=(d.getUTCDay()+6)%7; // Monday = 0 ... Sunday = 6
+  d.setUTCDate(d.getUTCDate()-day);
+  return d.toISOString().slice(0,10);
+}
+function formatBehaviourDate(date){
+  const m=String(date||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m)return String(date||"");
+  const d=new Date(Date.UTC(Number(m[1]),Number(m[2])-1,Number(m[3])));
+  return d.toLocaleDateString(undefined,{day:"2-digit",month:"short",timeZone:"UTC"});
+}
+function renderBehaviour(){
+  const points={A:15,B:5,C:2,D:-2,E:-5};
+  const counts={A:0,B:0,C:0,D:0,E:0};
+
+  // IMPORTANT: the behaviour graph is WEEKLY. Every event in the same
+  // Monday-Sunday week is combined into one weekly bar. The detailed table
+  // below still keeps every individual behaviour record and its date.
+  const weekly={};
+  behaviour.forEach(r=>{
+    const g=String(r.grade||"").trim().toUpperCase();
+    if(counts[g]===undefined)return;
+    counts[g]++;
+    const rawDate=r.behaviour_date||r.recorded_date||r.created_at||r.recorded_at||r.date;
+    const date=String(rawDate||"").slice(0,10);
+    if(!date)return;
+    const value=Number.isFinite(Number(r.points)) ? Number(r.points) : (points[g]||0);
+    const wk=weekKey(date);
+    if(!weekly[wk]) weekly[wk]={positive:0,negative:0,positiveEvents:0,negativeEvents:0,totalEvents:0,records:[]};
+    weekly[wk].records.push(r);
+    weekly[wk].totalEvents++;
+    if(value>0){ weekly[wk].positive+=value; weekly[wk].positiveEvents++; }
+    else if(value<0){ weekly[wk].negative+=value; weekly[wk].negativeEvents++; }
+  });
+
+  const weekStarts=Object.keys(weekly).sort();
+  const formatShort=d=>d.toLocaleDateString(undefined,{day:"2-digit",month:"short",timeZone:"UTC"});
+  const labels=weekStarts.map((wk,i)=>{
+    const startDate=new Date(wk+"T00:00:00Z");
+    const endDate=new Date(startDate);
+    endDate.setUTCDate(endDate.getUTCDate()+6);
+    return "Week "+(i+1)+"\n"+formatShort(startDate)+"–"+formatShort(endDate);
+  });
+  const positive=weekStarts.map(w=>weekly[w].positive||0);
+  const negative=weekStarts.map(w=>weekly[w].negative||0);
+
+  const chartOptions={
+    responsive:false,
+    maintainAspectRatio:false,
+    interaction:{mode:"index",intersect:false},
+    scales:{
+      x:{
+        stacked:true,
+        offset:true,
+        ticks:{autoSkip:false,maxRotation:0,minRotation:0,font:{size:10}},
+        grid:{color:"#edf1f6",lineWidth:1},
+        title:{display:true,text:"Weeks"}
+      },
+      y:{beginAtZero:true,stacked:true,ticks:{precision:0},title:{display:true,text:"Behaviour points"}}
+    },
+    plugins:{
+      legend:{position:"bottom"},
+      tooltip:{
+        callbacks:{
+          title:(items)=>{
+            const idx=items[0]?.dataIndex??0;
+            const w=weekly[weekStarts[idx]]||{};
+            const start=weekStarts[idx]||"";
+            const sd=start?new Date(start+"T00:00:00Z"):null;
+            const ed=sd?new Date(sd):null;
+            if(ed)ed.setUTCDate(ed.getUTCDate()+6);
+            return "Week "+(idx+1)+(sd?" ("+formatShort(sd)+"–"+formatShort(ed)+")":"")+" • "+(w.totalEvents||0)+" event"+((w.totalEvents||0)===1?"":"s");
+          },
+          label:(item)=>{
+            const w=weekly[weekStarts[item.dataIndex]]||{};
+            if(item.datasetIndex===0)return " Positive: +"+(w.positive||0)+" ("+(w.positiveEvents||0)+" event"+((w.positiveEvents||0)===1?"":"s")+")";
+            return " Negative: "+(w.negative||0)+" ("+(w.negativeEvents||0)+" event"+((w.negativeEvents||0)===1?"":"s")+")";
+          }
+        }
+      }
+    }
+  };
+
+  function makeBehaviourChart(id,key){
+    const canvas=$(id);
+    if(!canvas)return;
+    destroyChart(key);
+    // One x-axis position = one week. There are NO daily x-axis categories.
+    const width=Math.max(760,weekStarts.length*150);
+    canvas.width=width;
+    canvas.height=330;
+    canvas.style.width=width+"px";
+    canvas.style.height="330px";
+    charts[key]=new Chart(canvas,{
+      type:"bar",
+      data:{labels,datasets:[
+        {label:"Positive points",data:positive,backgroundColor:"#15966b",borderWidth:1},
+        {label:"Negative points",data:negative,backgroundColor:"#d9534f",borderWidth:1}
+      ]},
+      options:chartOptions
+    });
+  }
+
+  makeBehaviourChart("behaviourChart","behaviour");
+  makeBehaviourChart("homeBehaviourChart","homeBehaviour");
+
+  const totalPoints=behaviour.reduce((sum,r)=>{
+    const g=String(r.grade||"").trim().toUpperCase();
+    return sum+(Number.isFinite(Number(r.points))?Number(r.points):(points[g]||0));
+  },0);
+  const positiveTotal=behaviour.reduce((sum,r)=>{
+    const g=String(r.grade||"").trim().toUpperCase();
+    const v=Number.isFinite(Number(r.points))?Number(r.points):(points[g]||0);
+    return sum+(v>0?v:0);
+  },0);
+  const negativeTotal=behaviour.reduce((sum,r)=>{
+    const g=String(r.grade||"").trim().toUpperCase();
+    const v=Number.isFinite(Number(r.points))?Number(r.points):(points[g]||0);
+    return sum+(v<0?v:0);
+  },0);
+
+  const summary=$("behaviourSummary");
+  if(summary)summary.innerHTML=`<div class="behaviour-total">${totalPoints>=0?"+":""}${totalPoints}</div><div class="behaviour-summary-row"><span class="positive">+${positiveTotal} positive</span><span class="negative">${negativeTotal} negative</span><span>${behaviour.length} event${behaviour.length===1?"":"s"}</span></div>`;
+
+  const table=$("behaviourTable");
+  if(table) table.innerHTML=behaviour.length?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Week</th><th>Grade</th><th>Points</th><th>Subject</th><th>Comment</th></tr></thead><tbody>${[...behaviour].sort((a,b)=>String(b.behaviour_date||b.recorded_date||b.created_at||b.date||"").localeCompare(String(a.behaviour_date||a.recorded_date||a.created_at||a.date||""))).map(r=>{const d=String(r.behaviour_date||r.recorded_date||r.created_at||r.date||"").slice(0,10);const g=String(r.grade||"").trim().toUpperCase();const v=Number.isFinite(Number(r.points))?Number(r.points):(points[g]||0);return `<tr><td>${escapeHtml(d)}</td><td>${escapeHtml(weekKey(d))}</td><td>${escapeHtml(g)}</td><td class="${v>=0?"positive":"negative"}">${v>=0?"+":""}${v}</td><td>${escapeHtml(r.subject_name||r.subject||"—")}</td><td>${escapeHtml(r.comment||r.note||"")}</td></tr>`;}).join("")}</tbody></table></div>`:`<div class="empty">No behaviour records yet.</div>`;
+}
+
+function withSectionTimeout(promise, ms=8000){
+  return Promise.race([
+    promise,
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error("This section took too long to respond.")),ms))
+  ]);
+}
+
+function gradeFromPercent(p){
+  const n=Number(p);
+  if(!Number.isFinite(n)) return "—";
+  if(n>=80) return "A";
+  if(n>=70) return "B";
+  if(n>=60) return "C";
+  if(n>=50) return "D";
+  return "E";
+}
+
+window.loadAssessments = async function loadAssessments(){
+  const table=$('assessmentTable');
+  try{
+    if(!student?.id){throw new Error('Student account details are not ready yet.');}
+    if(table)table.innerHTML='<div class="loading">Loading assessments…</div>';
+    let r=await withSectionTimeout(supabaseClient.from('assessments').select('*').eq('student_id',student.id).order('updated_at',{ascending:false}),8000);
+    if(r.error){
+      r=await withSectionTimeout(supabaseClient.from('assessments').select('*').eq('student_id',student.id),8000);
+    }
+    if(r.error)throw r.error;
+    assessments=(r.data||[]).filter(x=>x.mark!==null&&x.mark!==undefined&&x.mark!=='');
+    const subjectIds=[...new Set(assessments.map(x=>x.subject_id).filter(Boolean))];
+    let subjects=[];
+    if(subjectIds.length){
+      const sr=await withSectionTimeout(supabaseClient.from('subjects').select('id,name').in('id',subjectIds),8000);
+      if(!sr.error)subjects=sr.data||[];
+    }
+    const sm=new Map(subjects.map(x=>[x.id,x.name]));
+    if(table)table.innerHTML=assessments.length?`<div class="table-wrap"><table><thead><tr><th>#</th><th>Subject</th><th>Assessment</th><th>Percentage</th><th>Grade</th><th>Term</th></tr></thead><tbody>${assessments.map((r,i)=>{const max=Number(r.max_mark||20);const m=Number(r.mark);const p=max?m/max*100:0;return `<tr><td>${i+1}</td><td><strong>${esc(sm.get(r.subject_id)||r.subject_name||r.subject||'Subject')}</strong></td><td>${m.toFixed(2)} / ${max}</td><td>${p.toFixed(1)}%</td><td><span class="badge neutral">${gradeFromPercent(p)}</span></td><td>${esc(r.term_name||r.term||r.term_id||'—')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty-state">No assessment marks have been recorded for you yet.</div>';
+  }catch(error){
+    console.error('ACCESS UG assessments load failed:',error);
+    if(table)table.innerHTML='<div class="empty-state">Assessments could not be loaded right now. Please refresh or try again.</div>';
+    notice('assessmentNotice','Could not load assessments: '+(error?.message||String(error)),'err');
+  }
+}
+
+function renderInbox(rows){
+  const unread=rows.filter(r=>!r.is_read).length;
+  const badge=$('inboxBadge');
+  if(badge){badge.textContent=unread;badge.style.display=unread?'inline-block':'none';}
+  const html=rows.length?rows.map(r=>`<div style="padding:14px 0;border-bottom:1px solid var(--border);${r.is_read?'opacity:.72':''}"><div style="display:flex;justify-content:space-between;gap:12px"><strong>${esc(r.title||'ACCESS UG notification')}</strong><span class="muted">${esc((r.created_at||'').slice(0,16).replace('T',' '))}</span></div><div style="margin-top:5px;font-size:13px">${esc(r.message||'')}</div>${!r.is_read?'<span class="badge neutral" style="margin-top:8px">Unread</span>':''}</div>`).join(''):'<div class="empty-state">You have no notifications yet.</div>';
+  if($('inboxList'))$('inboxList').innerHTML=html;
+  if($('homeInbox'))$('homeInbox').innerHTML=rows.slice(0,3).length?rows.slice(0,3).map(r=>`<div style="padding:11px 0;border-bottom:1px solid var(--border)"><strong>${esc(r.title||'Notification')}</strong><div class="muted" style="margin-top:4px">${esc(r.message||'')}</div></div>`).join(''):'<div class="empty-state">No new notifications.</div>';
+}
+async function markAllRead(){
+  if(!authUser)return;
+  const r=await supabaseClient.from('notifications').update({is_read:true}).eq('recipient_user_id',authUser.id).eq('is_read',false);
+  if(r.error){notice('inboxNotice','Could not mark notifications as read: '+r.error.message,'err');return;}
+  toast('Notifications marked as read.'); await loadInbox();
+}
+
+async function submitReport(){
+ const type=$("reportType").value,subjectText=$("reportSubject").value.trim(),description=$("reportDescription").value.trim();
+ if(!description)return notice("reportNotice","Please describe the issue before sending.","err");
+ const payload={reported_by:student.id,report_type:type,subject:subjectText||null,description};
+ const {error}=await supabaseClient.from("reports").insert(payload);
+ if(error)return notice("reportNotice","The report was not submitted: "+error.message,"err");
+ notice("reportNotice","Report submitted successfully to ACCESS UG. The school can now review it.","ok");
+ $("reportSubject").value="";$("reportDescription").value="";toast("Report submitted.");
+ await loadReports();
+}
+
+/* Navigation — deliberately defensive: one missing optional element
+   must never stop the rest of the Student Dashboard from booting. */
+function bindStudentNavigation(){
+ document.querySelectorAll(".nav button").forEach(b=>{
+   b.addEventListener("click",()=>showPage(b.dataset.page));
+ });
+ document.querySelectorAll(".quick-nav button").forEach(b=>{
+   b.addEventListener("click",()=>showPage(b.dataset.quick));
+ });
+ const menuBtn=$("menuBtn"), sidebar=$("sidebar"), overlay=$("overlay");
+ menuBtn?.addEventListener("click",()=>{
+   sidebar?.classList.toggle("open");
+   overlay?.classList.toggle("show");
+ });
+ overlay?.addEventListener("click",()=>{
+   sidebar?.classList.remove("open");
+   overlay?.classList.remove("show");
+ });
+ $("logoutBtn")?.addEventListener("click",async()=>{
+   try{ await supabaseClient.auth.signOut(); } finally { location.replace("./index.html"); }
+ });
+ $("submitReport")?.addEventListener("click",submitReport);
+}
+
+function showPage(id){
+ const target=$(id);
+ if(!target)return;
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ target.classList.add("active");
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
+ const titles={home:"Student Dashboard",attendance:"Attendance",behaviour:"Behaviour",fees:"Fees",results:"Results",assessments:"Assessments",endterm:"End of Term",inbox:"Inbox",reports:"Report an Issue"};
+ const title=$("pageTitle"); if(title)title.textContent=titles[id]||"Student Dashboard";
+ $("sidebar")?.classList.remove("open"); $("overlay")?.classList.remove("show");
+ if(id==="fees")loadFees().catch(e=>console.error("Fees section:",e));
+  if(id==="results")loadStudentResults().catch(e=>console.error("Results section:",e));
+ if(id==="assessments")window.loadAssessments().catch(e=>console.error("Assessments section:",e));
+ if(id==="endterm")window.loadEndTerm().catch(e=>console.error("End of Term section:",e));
+ if(id==="reports")loadReports().catch(e=>console.error("Reports section:",e));
+ if(id==="inbox")loadInbox().catch(e=>console.error("Inbox section:",e));
+}
+
+
+function withResultsTimeout(promise, ms=5500){
+ return Promise.race([
+   promise,
+   new Promise((_,reject)=>setTimeout(()=>reject(new Error("Results check timed out. Please refresh and try again.")),ms))
+ ]);
+}
+function setResultsChecking(){
+ const a=$("assessmentReportStatus"),am=$("assessmentReportMeta"),e=$("endReportStatus"),em=$("endReportMeta");
+ if(a)a.textContent="Checking…";
+ if(am)am.textContent="Checking the recorded subjects for this term.";
+ if(e)e.textContent="Checking…";
+ if(em)em.textContent="Checking the recorded subjects for this term.";
+}
+function setResultsUnavailable(message){
+ const a=$("assessmentReportStatus"),am=$("assessmentReportMeta"),e=$("endReportStatus"),em=$("endReportMeta");
+ if(a)a.textContent="Unable to check";
+ if(am)am.textContent=message||"The Results service could not be reached.";
+ if(e)e.textContent="Unable to check";
+ if(em)em.textContent="The Results service could not be reached.";
+}
+window.loadEndTerm = async function loadEndTerm(){
+  const table=$('endtermTable');
+  try{
+    if(!student?.id){throw new Error('Student account details are not ready yet.');}
+    if(table)table.innerHTML='<div class="loading">Loading end-of-term results…</div>';
+    let r=await withSectionTimeout(supabaseClient.from('end_term_results').select('*').eq('student_id',student.id).order('updated_at',{ascending:false}),8000);
+    if(r.error)r=await withSectionTimeout(supabaseClient.from('end_term_results').select('*').eq('student_id',student.id),8000);
+    if(r.error)throw r.error;
+    endResults=(r.data||[]).filter(x=>x.end_term_mark!==null&&x.end_term_mark!==undefined&&x.end_term_mark!=='');
+    const subjectIds=[...new Set(endResults.map(x=>x.subject_id).filter(Boolean))];
+    let subjects=[];
+    if(subjectIds.length){
+      const sr=await withSectionTimeout(supabaseClient.from('subjects').select('id,name').in('id',subjectIds),8000);
+      if(!sr.error)subjects=sr.data||[];
+    }
+    const sm=new Map(subjects.map(x=>[x.id,x.name]));
+    if(table)table.innerHTML=endResults.length?`<div class="table-wrap"><table><thead><tr><th>#</th><th>Subject</th><th>Assessment /20</th><th>End Term /80</th><th>Final /100</th><th>Grade</th><th>Term</th></tr></thead><tbody>${endResults.map((r,i)=>{const a=Number(r.assessment_mark||0),e=Number(r.end_term_mark||0),f=Number(r.final_mark??(a+e));return `<tr><td>${i+1}</td><td><strong>${esc(sm.get(r.subject_id)||r.subject_name||r.subject||'Subject')}</strong></td><td>${a.toFixed(2)}</td><td>${e.toFixed(2)}</td><td class="final">${f.toFixed(2)} / 100</td><td><span class="badge neutral">${gradeFromPercent(f)}</span></td><td>${esc(r.term_name||r.term||r.term_id||'—')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty-state">No end-of-term results have been recorded for you yet.</div>';
+  }catch(error){
+    console.error('ACCESS UG end-of-term load failed:',error);
+    if(table)table.innerHTML='<div class="empty-state">End-of-term results could not be loaded right now. Please refresh or try again.</div>';
+    notice('endtermNotice','Could not load end-of-term results: '+(error?.message||String(error)),'err');
+  }
+}
+
+window.loadFees = async function loadFees(){
+  if(!student?.id)return;
+  const body=$("feesSummaryBody");
+  try{
+    if(body)body.innerHTML='<div class="loading">Loading fees…</div>';
+    const {data,error}=await supabaseClient.rpc('get_my_fee_summary',{p_student_id:student.id});
+    if(error)throw error;
+    feeSummary=Array.isArray(data)?data[0]:(data||null);
+    if(!feeSummary){if(body)body.innerHTML='<div class="fees-empty">No fees account is available for this student yet.</div>';return;}
+    const total=Number(feeSummary.total_fees||0),paid=Number(feeSummary.paid||0),balance=Number(feeSummary.balance||0);
+    const pctPaid=total>0?Math.min(100,Math.max(0,(paid/total)*100)):0;
+    const status=total<=0?'Not set':balance<=0?'Paid in full':'Balance due';
+    const statusClass=balance<=0&&total>0?'present':total<=0?'neutral':'auth';
+    const money=v=>new Intl.NumberFormat('en-UG',{style:'currency',currency:'UGX',maximumFractionDigits:0}).format(Number(v)||0);
+    if($("feesYearChip"))$("feesYearChip").textContent='Academic year '+(feeSummary.academic_year||'—');
+    if(body)body.innerHTML=`<div class="fees-summary-grid"><div class="fees-summary-stat"><div class="label">Total fees</div><div class="value">${esc(money(total))}</div></div><div class="fees-summary-stat"><div class="label">Paid</div><div class="value">${esc(money(paid))}</div></div><div class="fees-summary-stat balance"><div class="label">Balance due</div><div class="value">${esc(money(balance))}</div></div><div class="fees-summary-stat"><div class="label">Payments recorded</div><div class="value">${esc(feeSummary.payment_count??0)}</div></div></div><div class="fees-summary-meta"><span class="fees-summary-chip">${esc(feeSummary.class_name||student.class_level||'Class —')}</span><span class="badge ${statusClass}">${esc(status)}</span></div><div style="margin-top:18px"><div style="display:flex;justify-content:space-between;gap:10px;font-size:12px;font-weight:750;color:#536278"><span>Payment progress</span><span>${pctPaid.toFixed(0)}%</span></div><div class="fees-progress"><div style="width:${pctPaid}%"></div></div></div><div class="fees-source-note">Fee amounts are controlled by the school/admin fee structure for your class/stream. Payments recorded by the school reduce your balance automatically.</div>`;
+  }catch(error){
+    console.error('ACCESS UG fees load failed:',error);
+    if(body)body.innerHTML='<div class="fees-empty">Fees could not be loaded right now. Please refresh the dashboard or contact the school administrator.</div>';
+    notice('feesNotice','Could not load fees: '+(error?.message||String(error)),'err');
+  }
+}
+
+window.loadReports = async function loadReports(){
+ const {data,error}=await supabaseClient.from("reports").select("*").eq("reported_by",student.id).order("created_at",{ascending:false});
+ if(error){$("reportsTable").innerHTML='<div class="empty-state">Reports could not be loaded: '+esc(error.message)+'</div>';return}
+ $("reportsTable").innerHTML=(data||[]).length?`<div class="table-wrap"><table><thead><tr><th>Submitted</th><th>Type</th><th>Subject</th><th>Status</th><th>Message</th></tr></thead><tbody>${data.map(r=>`<tr><td>${esc((r.created_at||"").slice(0,10)||"—")}</td><td>${esc(r.report_type||"—")}</td><td>${esc(r.subject||"—")}</td><td>${esc(r.status||"Submitted")}</td><td>${esc(r.description||r.message||"—")}</td></tr>`).join("")}</tbody></table></div>`:'<div class="empty-state">You have not submitted any reports yet.</div>';
+}
+
+window.loadInbox = async function loadInbox(){
+  if(!student||!authUser)return;
+  const candidates=[authUser.id,student.id].filter(Boolean);
+  let data=null,error=null;
+  for(const uid of candidates){
+    const r=await supabaseClient.from('notifications').select('*').eq('recipient_user_id',uid).order('created_at',{ascending:false}).limit(30);
+    if(!r.error){data=r.data||[];error=null;break;}
+    error=r.error;
+  }
+  if(error){notice('inboxNotice','Notifications could not be loaded: '+error.message,'err');renderInbox([]);return}
+  renderInbox(data||[]);
+}
+
+async function loadStudentResults(){
+ const noticeEl=$("resultsNotice");
+ const sel=$("resultsTerm");
+ try{
+  if(!student?.id || !student?.school_id) throw new Error("Student account details are not ready yet.");
+  setResultsChecking();
+
+  // Keep Results isolated from the main dashboard. A slow/unavailable Results
+  // table must never leave the student dashboard permanently on “Checking…”.
+  const termsQuery=supabaseClient.from("academic_terms").select("id,academic_year,term_number,name,start_date,end_date").eq("school_id",student.school_id).order("academic_year",{ascending:false}).order("term_number",{ascending:false});
+  const {data:terms,error:te}=await withResultsTimeout(termsQuery,5500);
+  if(te)throw te;
+  if(sel)sel.innerHTML=(terms||[]).map(t=>`<option value="${esc(t.id)}">${esc(t.academic_year)} · ${esc(t.name||("Term "+t.term_number))}</option>`).join("");
+  if(!terms?.length){
+    if(noticeEl)noticeEl.innerHTML='<div class="empty">No academic term has been configured yet. Results will appear here after the school configures a term.</div>';
+    setResultsUnavailable("No academic term is configured for this school yet.");
+    return;
+  }
+
+  const run=async()=>{
+   const termId=sel?.value||terms[0].id;
+   const queries=[
+    supabaseClient.from("assessments").select("subject_id").eq("student_id",student.id).eq("term_id",termId),
+    supabaseClient.from("end_term_results").select("subject_id").eq("student_id",student.id).eq("term_id",termId),
+    supabaseClient.from("student_result_reports").select("*").eq("student_id",student.id).eq("term_id",termId).order("report_type"),
+    supabaseClient.from("behaviour_records").select("id,behaviour_date,recorded_date,grade,points,comment,created_at").eq("student_id",student.id).eq("term_id",termId).eq("school_id",student.school_id).order("behaviour_date",{ascending:true}).order("created_at",{ascending:true})
+   ];
+   const result=await withResultsTimeout(Promise.all(queries),5500);
+   const [ar,er,rr,br]=result;
+   if(ar.error)throw new Error("Assessment results could not be checked: "+ar.error.message);
+   if(er.error)throw new Error("End-of-term results could not be checked: "+er.error.message);
+   if(rr.error)throw new Error("Student reports could not be checked: "+rr.error.message);
+   if(br.error)throw new Error("Behaviour records could not be loaded for the report: "+br.error.message);
+   const behaviourRecords=br.data||[];
+   const reportsWithBehaviour=(rr.data||[]).map(report=>({
+     ...report,
+     report_data:{
+       ...(report.report_data||{}),
+       behaviour:{...((report.report_data||{}).behaviour||{}),records:behaviourRecords}
+     }
+   }));
+   const ac=new Set((ar.data||[]).map(x=>x.subject_id).filter(Boolean)).size;
+   const ec=new Set((er.data||[]).map(x=>x.subject_id).filter(Boolean)).size;
+   const aReady=ac>=9, eReady=aReady&&ec>=9;
+   $("assessmentReportStatus").textContent=aReady?"Ready":"Not ready yet";
+   $("assessmentReportMeta").textContent=aReady?`${ac} subjects recorded — report generated automatically.`:`${ac}/9 assessment subjects recorded.`;
+   $("endReportStatus").textContent=eReady?"Ready":"Not ready yet";
+   $("endReportMeta").textContent=eReady?`${ec} end-term subjects recorded — report generated automatically.`:`Assessment ${ac}/9 · End-term ${ec}/9.`;
+   $("resultReportList").innerHTML=reportsWithBehaviour.length
+     ? reportsWithBehaviour.map(renderStudentResultReport).join("")
+     : '<div class="card"><div class="empty">No official report is available for this term yet. It will appear automatically when the required marks are recorded.</div></div>';
+   if(noticeEl)noticeEl.innerHTML="";
+  };
+
+  if(sel)sel.onchange=()=>run().catch(e=>{
+    console.error("ACCESS UG Results term check failed:",e);
+    setResultsUnavailable(e?.message||"The Results check failed.");
+    if(noticeEl)noticeEl.innerHTML=`<div class="notice err">${esc(e?.message||e)}</div>`;
+  });
+
+  // One controlled retry for transient network/database delays.
+  try{ await run(); }
+  catch(firstError){
+    console.warn("ACCESS UG Results first check failed; retrying once.",firstError);
+    await new Promise(resolve=>setTimeout(resolve,350));
+    await run();
+  }
+ }catch(e){
+   console.error("ACCESS UG Results load failed:",e);
+   setResultsUnavailable(e?.message||"The Results check could not be completed.");
+   if(noticeEl)noticeEl.innerHTML=`<div class="notice err">${esc(e?.message||e)}</div>`;
+   // Never throw from this section: loadAll must not turn a Results problem
+   // into a whole-dashboard loading/error state.
+ }
+}
+function reportGrade(percent){
+ const n=Number(percent);
+ if(!Number.isFinite(n))return "—";
+ if(n>=90)return "A*";
+ if(n>=80)return "A";
+ if(n>=70)return "B";
+ if(n>=60)return "C";
+ if(n>=50)return "D";
+ if(n>=40)return "E";
+ if(n>=30)return "F";
+ return "G";
+}
+function reportDescriptor(grade){
+ return ({'A*':'Outstanding','A':'Excellent','B':'Very Good','C':'Good','D':'Basic','E':'Minimum','F':'Below Competent','G':'Very Limited'})[grade]||'—';
+}
+function reportComment(grade){
+ return ({
+  'A*':'Outstanding achievement. Keep challenging yourself.',
+  'A':'Excellent achievement. Maintain this high standard.',
+  'B':'Very good achievement. Continue strengthening the remaining competencies.',
+  'C':'Good achievement. Continue practising to strengthen more competencies.',
+  'D':'Basic achievement. More practice and support are recommended.',
+  'E':'Minimum achievement. Focused support and more practice are needed.',
+  'F':'Some competencies achieved, but further improvement is required.',
+  'G':'Very limited achievement. Intensive support and practice are required.'
+ })[grade]||'';
+}
+function renderStudentResultReport(r){
+ const d=r.report_data||{},b=d.behaviour||{},a=d.attendance||{},subs=Array.isArray(d.subjects)?d.subjects:[],records=Array.isArray(b.records)?b.records:[];
+ const isAssessment=r.report_type==='assessment';
+ const title=isAssessment?'ASSESSMENT REPORT':`END OF TERM ${esc(String(d.term_name||'').replace(/^Term\s*/i,'').trim()||'REPORT')}`;
+ const photo=d.student_photo_url||d.profile_photo_url||d.photo_url||'';
+ const photoHtml=photo?`<img src="${esc(photo)}" alt="Student photo" style="width:82px;height:100px;object-fit:cover;border:1px solid #b9c5d3;border-radius:4px;background:#eef3f9">`:`<div style="width:82px;height:100px;border:1px solid #b9c5d3;background:#eef3f9;display:grid;place-items:center;color:#64748b;font-size:10px;text-align:center">PHOTO<br>NOT AVAILABLE</div>`;
+
+ const mapped=subs.map(x=>{
+   const score=isAssessment?Number(x.percentage):Number(x.final_mark);
+   const grade=reportGrade(score);
+   return {...x,computed_grade:grade,computed_descriptor:reportDescriptor(grade),computed_comment:reportComment(grade)};
+ });
+ const rows=mapped.map((x,i)=>isAssessment
+  ? `<tr><td>${i+1}</td><td>${esc(x.subject||'—')}</td><td>${esc(x.mark??'—')}</td><td>${esc(x.max_mark??20)}</td><td><strong>${esc(x.computed_grade)}</strong></td><td>${esc(x.computed_descriptor)}</td><td>${esc(x.computed_comment)}</td></tr>`
+  : `<tr><td>${i+1}</td><td>${esc(x.subject||'—')}</td><td>${esc(x.assessment_mark??'—')}</td><td>${esc(x.end_term_mark??'—')}</td><td><strong>${esc(x.final_mark??'—')}</strong></td><td><strong>${esc(x.computed_grade)}</strong></td><td>${esc(x.computed_descriptor)}</td><td>${esc(x.computed_comment)}</td></tr>`).join('');
+ const head=isAssessment
+  ? '<tr><th>#</th><th>Subject</th><th>Assessment /20</th><th>Max</th><th>Grade</th><th>Descriptor</th><th>Facilitator remark</th></tr>'
+  : '<tr><th>#</th><th>Subject</th><th>Assessment /20</th><th>EOT /80</th><th>Total /100</th><th>Grade</th><th>Descriptor</th><th>Facilitator remark</th></tr>';
+
+ const overallNum=Number(d.average_percentage);
+ const overall=Number.isFinite(overallNum)?overallNum.toFixed(2):'—';
+ const overallGrade=reportGrade(overallNum);
+ const performance=reportDescriptor(overallGrade);
+ const overallComment=reportComment(overallGrade);
+ const positive=Number(b.positive_points||0),negative=Number(b.negative_points||0),net=Number(b.net_points??(positive-negative));
+ const attendanceText=`${Number(a.present||0)} present · ${Number(a.absent||0)} absent · ${Number(a.authorized_absence||0)} authorized`;
+
+ const behaviourRows=records.map((x,i)=>{
+   const pts=Number(x.points||0);
+   const type=pts>0?'Positive':pts<0?'Negative':'Neutral';
+   const date=x.behaviour_date||x.recorded_date||'—';
+   return `<tr><td>${i+1}</td><td>${esc(date)}</td><td>${esc(type)}</td><td>${pts>0?'+'+pts:String(pts)}</td><td>${esc(x.grade||'—')}</td><td>${esc(x.comment||'—')}</td></tr>`;
+ }).join('');
+
+ const identity=`<div class="report-student-grid">
+   <div><span>Student</span><strong>${esc(d.student_name||'—')}</strong></div>
+   <div><span>Student ID</span><strong>${esc(d.student_number||'—')}</strong></div>
+   <div><span>Gender</span><strong>${esc(d.gender||'—')}</strong></div>
+   <div><span>Class</span><strong>${esc(d.class||d.class_level||'—')}</strong></div>
+   <div><span>Stream</span><strong>${esc(d.stream||'—')}</strong></div>
+   <div><span>Term</span><strong>${esc(d.term_name||'—')}</strong></div>
+   <div><span>Academic year</span><strong>${esc(d.academic_year||'—')}</strong></div>
+ </div>`;
+
+ return `<article class="card result-report official-school-report" data-report-id="${esc(r.id)}">
+  <div class="report-print-actions"><button class="btn secondary" onclick="printStudentResult('${esc(r.id)}')">Print / Save PDF</button></div>
+  <div class="school-report-header">
+    <div class="school-report-name">${esc(d.school_name||'ACCESS UG')}</div>
+    ${d.school_address?`<div>${esc(d.school_address)}</div>`:''}
+    ${d.school_phone?`<div>Tel: ${esc(d.school_phone)}</div>`:''}
+    <div class="school-motto">SMART SCHOOLS • CONNECTED COMMUNITIES</div>
+    <div class="report-title">${title}</div>
+  </div>
+  <div class="report-student-row">${identity}<div class="report-photo">${photoHtml}</div></div>
+  <div class="report-section-label">ACADEMIC PERFORMANCE</div>
+  <div class="table-wrap report-table"><table><thead>${head}</thead><tbody>${rows||'<tr><td colspan="8">No subject results available.</td></tr>'}</tbody></table></div>
+  <div class="report-summary-row">
+    <div><span>AVERAGE SCORE</span><strong>${overall}</strong></div>
+    ${!isAssessment?`<div><span>FORMATIVE /20</span><strong>${d.average_assessment_score!=null?Number(d.average_assessment_score).toFixed(2):'—'}</strong></div><div><span>END TERM /80</span><strong>${d.average_end_term_score!=null?Number(d.average_end_term_score).toFixed(2):'—'}</strong></div>`:''}
+    <div><span>OVERALL PERFORMANCE</span><strong>${esc(performance)}</strong></div>
+  </div>
+  <div class="report-section-label">STUDENT PROGRESS</div>
+  <div class="report-mini-grid">
+    <div><span>Attendance</span><strong>${esc(attendanceText)}</strong></div>
+    <div><span>Positive behaviour points</span><strong class="positive">+${positive}</strong></div>
+    <div><span>Negative behaviour points</span><strong class="negative">-${negative}</strong></div>
+    <div><span>Net behaviour points</span><strong>${net>=0?'+':''}${net}</strong></div>
+  </div>
+  <div class="report-section-label">BEHAVIOUR RECORD</div>
+  <div class="table-wrap report-behaviour-table"><table><thead><tr><th>#</th><th>Date</th><th>Type</th><th>Points</th><th>Grade</th><th>Comment</th></tr></thead><tbody>${behaviourRows||'<tr><td colspan="6">No behaviour records were recorded for this term.</td></tr>'}</tbody></table></div>
+  <div class="report-remarks">
+    <div><strong>Teacher / Facilitator Remark</strong><div>${esc(overallComment)}</div></div>
+    <div><strong>Head Teacher Remark</strong><div>${esc(overallComment)}</div></div>
+  </div>
+  <div class="report-section-label">GRADING SCALE</div>
+  <table class="grading-table"><thead><tr><th>Grade</th><th>A*</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th></tr></thead><tbody><tr><th>Range</th><td>90–100</td><td>80–89</td><td>70–79</td><td>60–69</td><td>50–59</td><td>40–49</td><td>30–39</td><td>0–29</td></tr></tbody></table>
+  <div class="report-footer">
+    <div><strong>Overall grade:</strong> ${esc(overallGrade)} &nbsp; <strong>Descriptor:</strong> ${esc(performance)}</div>
+    <div><strong>Term:</strong> ${esc(d.term_name||'—')} &nbsp; <strong>Academic year:</strong> ${esc(d.academic_year||'—')}</div>
+    <div><strong>Term dates:</strong> ${esc(d.term_start||'—')} to ${esc(d.term_end||'—')}</div>
+    <div class="muted">Generated automatically by ACCESS UG from the school's recorded student data.</div>
+  </div>
+ </article>`;
+}
+window.printStudentResult=function(id){
+ const el=document.querySelector(`.result-report[data-report-id="${CSS.escape(String(id))}"]`)||document.querySelector('.result-report');if(!el)return;
+ const w=window.open('','_blank');if(!w)return;
+ const clone=el.cloneNode(true);clone.querySelectorAll('button').forEach(b=>b.remove());
+ w.document.write('<!doctype html><html><head><title>ACCESS UG Result</title><style>body{font-family:Arial,sans-serif;color:#182b43;padding:16px;margin:0}*{box-sizing:border-box}.official-school-report{border:0;max-width:none;margin:0;padding:0}.report-print-actions{display:none!important}.school-report-header{text-align:center;border-bottom:1px solid #b9c5d3;padding-bottom:10px;margin-bottom:10px}.school-report-name{font-weight:900;font-size:18px}.school-motto{font-weight:700;margin-top:2px}.report-title{display:inline-block;margin-top:7px;padding:4px 25px;border:1px solid #68788c;border-radius:9px;font-weight:900}.report-student-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}.report-student-grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #cbd6e3}.report-student-grid>div{padding:5px 7px;border-right:1px solid #d8e0e8;border-bottom:1px solid #d8e0e8}.report-student-grid span,.report-summary-row span,.report-mini-grid span{display:block;font-size:7px;text-transform:uppercase;color:#617087;font-weight:800}.report-student-grid strong{display:block;margin-top:2px;font-size:9px}.report-photo{width:68px;flex:none}.report-photo img,.report-photo>div{width:68px!important;height:84px!important}.report-section-label{font-weight:900;background:#eef3f8;border:1px solid #cbd6e3;padding:4px 6px;margin-top:7px}.report-table table,.grading-table,.report-behaviour-table table{width:100%;border-collapse:collapse}.report-table th,.report-table td,.grading-table th,.grading-table td,.report-behaviour-table th,.report-behaviour-table td{border:1px solid #cbd6e3;padding:3px 4px;font-size:7px}.report-table th,.grading-table th,.report-behaviour-table th{font-weight:900;background:#f6f8fa}.report-summary-row{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #cbd6e3;margin-top:4px}.report-summary-row>div{padding:4px;border-right:1px solid #d8e0e8}.report-summary-row strong{display:block;font-size:10px;margin-top:1px}.report-mini-grid{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #cbd6e3;border-top:0}.report-mini-grid>div{padding:4px;border-right:1px solid #d8e0e8}.report-mini-grid strong{display:block;margin-top:1px;font-size:8px}.report-remarks{display:grid;grid-template-columns:1fr 1fr;border:1px solid #cbd6e3;border-top:0}.report-remarks>div{padding:5px;border-right:1px solid #d8e0e8;min-height:36px;font-size:7px}.report-remarks>div:last-child{border-right:0}.report-remarks div div{margin-top:3px;line-height:1.3}.report-footer{display:grid;gap:2px;margin-top:6px;font-size:7px}@page{size:A4;margin:8mm}@media print{body{padding:0}.official-school-report{page-break-inside:auto}.official-school-report tr{page-break-inside:avoid;break-inside:avoid}}</style></head><body>'+clone.outerHTML+'</body></html>');
+ w.document.close();w.focus();w.print();
+};
+async function loadAll(){
+ /*
+  * Load every section independently.
+  * One database/table error must never keep the entire dashboard
+  * looking as if it is still loading.
+  */
+ const jobs = [
+  ["attendance", window.loadAttendance || loadAttendance],
+  ["behaviour", window.loadBehaviour || loadBehaviour],
+  ["results", window.loadStudentResults || loadStudentResults],
+  ["assessment", window.loadAssessments],
+  ["endterm", window.loadEndTerm],
+  ["reports", window.loadReports || loadReports],
+  ["inbox", window.loadInbox || loadInbox]
+ ];
+
+ await Promise.all(jobs.map(async ([name, fn])=>{
+   try{
+     await fn();
+   }catch(error){
+     console.error("ACCESS UG student section failed:", name, error);
+     const noticeId =
+       name==="assessment" ? "assessmentNotice" :
+       name==="endterm" ? "endtermNotice" :
+       name==="reports" ? "reportNotice" :
+       name+"Notice";
+
+     if($(noticeId)){
+       notice(
+         noticeId,
+         "This section could not be loaded: " +
+         (error?.message || String(error)),
+         "err"
+       );
+     }
+
+     const tableId =
+       name==="assessment" ? "assessmentTable" :
+       name==="endterm" ? "endtermTable" :
+       name==="reports" ? "reportsTable" :
+       name==="behaviour" ? "behaviourTable" : null;
+
+     if(tableId && $(tableId)){
+       $(tableId).innerHTML =
+         '<div class="empty-state">This section could not be loaded right now. Please refresh the dashboard or contact the school administrator.</div>';
+     }
+   }
+ }));
+
+ // Never leave a generic "Loading..." message behind.
+ [
+   "attendanceInterpret",
+   "behaviourSummary",
+   "behaviourTable",
+   "assessmentTable",
+   "endtermTable",
+   "reportsTable"
+ ].forEach(id=>{
+   const el=$(id);
+   if(el && /loading\.\.\./i.test(el.textContent||"")){
+     el.innerHTML='<div class="empty-state">No data is currently available.</div>';
+   }
+ });
+}
+$("markAllRead")?.addEventListener("click",markAllRead);
+bindStudentNavigation();
+init();
+</script>
+<script id="accessug-student-profile-js">
+(function(){
+  const SB=window.supabaseClient;
+  const $=id=>document.getElementById(id);
+  if(!SB)return;
+
+  const modal=$('profileModal'),trigger=$('profileTrigger');
+  if(!modal||!trigger)return;
+
+  const profileCard=document.getElementById('profileCardClick');
+  if(profileCard){ profileCard.addEventListener('click',openProfile); profileCard.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openProfile();}}); }
+
+  let currentUser=null,currentStudent=null,currentParentMode=false,cropImage=null,cropScale=1,cropX=0,cropY=0;
+  let dragging=false,lastX=0,lastY=0,oldAvatarUrl='';
+  const cropModal=$('profileCropModal'),canvas=$('profileCropCanvas'),stage=$('profileCropStage');
+  const zoom=$('profileZoom'),ctx=canvas?.getContext('2d');
+
+  const initials=(name,email)=>{
+    const s=String(name||email||'S').trim(),p=s.split(/\s+/).filter(Boolean);
+    return (p.length>1?p[0][0]+p[p.length-1][0]:s.slice(0,2)).toUpperCase();
+  };
+  const status=(msg,type)=>{
+    const e=$('profileStatus');
+    if(e){e.textContent=msg||'';e.className='profile-status'+(type?' '+type:'')}
+  };
+  const safeUrl=u=>String(u||'').replace(/"/g,'&quot;');
+
+  async function sessionUser(){
+    const {data,error}=await SB.auth.getUser();
+    if(error||!data?.user)throw new Error('Your session has expired. Please log in again.');
+    currentUser=data.user;
+    return currentUser;
+  }
+
+  async function getIdentity(){
+    const u=await sessionUser();
+    const sid=localStorage.getItem('accessug_student_id')||sessionStorage.getItem('accessug_student_id');
+    let s=null;
+
+    if(sid){
+      const r=await SB.from('students').select('*').eq('id',sid).maybeSingle();
+      if(!r.error)s=r.data;
+    }
+    if(!s){
+      const r=await SB.from('students').select('*').ilike('email',u.email||'').limit(1);
+      if(!r.error)s=r.data?.[0]||null;
+    }
+
+    const isParent=localStorage.getItem('accessug_parent_mode')==='true' && String(localStorage.getItem('accessug_parent_email')||'').trim().toLowerCase()===(u.email||'').trim().toLowerCase();
+    let name=isParent ? '' : String(u.user_metadata?.full_name||u.user_metadata?.name||'').trim();
+    if(s){
+      name=name||s.student_name||s.full_name||
+        [s.first_name,s.last_name].filter(Boolean).join(' ')||'Student';
+    }
+
+    let schoolName=String(u.user_metadata?.school_name||'').trim();
+    const schoolId=s?.school_id||localStorage.getItem('accessug_student_school_id');
+
+    if(schoolId){
+      const sr=await SB.from('schools').select('name').eq('id',schoolId).maybeSingle();
+      if(!sr.error&&sr.data)schoolName=sr.data.name||schoolName;
+    }
+
+    currentStudent=s;
+    currentParentMode=isParent;
+    return {
+      name:name||u.email?.split('@')[0]||'Student',
+      email:u.email||s?.email||'',
+      schoolName:schoolName||'—',
+      studentId:s?.id||'',
+      photoUrl:String(s?.profile_photo_url||u.user_metadata?.avatar_url||''),
+      parentMode:currentParentMode
+    };
+  }
+
+  function setAvatar(el,url,name,email){
+    if(!el)return;
+    if(url)el.innerHTML='<img src="'+safeUrl(url)+'" alt="Profile photo">';
+    else el.textContent=initials(name,email);
+  }
+
+  function render(id){
+    const url=String(id.photoUrl||'');
+    oldAvatarUrl=url;
+
+    setAvatar($('profilePhoto'),url,id.name,id.email);
+    setAvatar(document.querySelector('#profileTrigger .avatar'),url,id.name,id.email);
+    setAvatar($('profileAvatar'),url,id.name,id.email);
+
+    [
+      ['profileModalName',id.name],
+      ['profileModalEmail',id.email],
+      ['profileModalSchool',id.schoolName],
+      ['profileReadName',id.name],
+      ['profileReadEmail',id.email],
+      ['profileReadSchool',id.schoolName]
+    ].forEach(([k,v])=>{if($(k))$(k).textContent=v});
+
+    if($('topEmail'))$('topEmail').textContent=id.parentMode ? 'Parent view' : id.email;
+    const editable=!id.parentMode;
+    ['uploadProfileBtn','removeProfileBtn','changePasswordBtn'].forEach(k=>{if($(k))$(k).style.display=editable?'':'none';});
+    if($('profileStatus') && id.parentMode)$('profileStatus').textContent='Parent view — student profile is read-only.';
+  }
+
+  async function refreshProfile(){
+    try{
+      const id=await getIdentity();
+      render(id);
+    }catch(e){
+      console.warn('Student profile refresh:',e.message);
+    }
+  }
+
+  function openProfile(){
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden','false');
+    status('');
+    void refreshProfile();
+  }
+  function closeProfile(){
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden','true');
+    status('');
+  }
+
+  function openCrop(file){
+    if(!cropModal||!canvas||!ctx)return;
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        cropImage=img;
+        cropScale=Math.max(1,420/Math.min(img.width,img.height));
+        cropX=0;cropY=0;zoom.value=1;
+        drawCrop();
+        cropModal.classList.add('show');
+        cropModal.setAttribute('aria-hidden','false');
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function drawCrop(){
+    if(!ctx||!cropImage)return;
+    const w=canvas.width,h=canvas.height;
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle='#0d1d33';
+    ctx.fillRect(0,0,w,h);
+    const base=Math.max(w/cropImage.width,h/cropImage.height);
+    const scale=base*cropScale;
+    const dw=cropImage.width*scale,dh=cropImage.height*scale;
+    const x=(w-dw)/2+cropX,y=(h-dh)/2+cropY;
+    ctx.drawImage(cropImage,x,y,dw,dh);
+  }
+
+  function closeCrop(){
+    cropModal?.classList.remove('show');
+    cropModal?.setAttribute('aria-hidden','true');
+    cropImage=null;
+  }
+
+  async function saveCrop(){
+    if(currentParentMode){status('Parent view is read-only. The student must change their own profile photo.','error');return;}
+    if(!currentUser||!cropImage)return;
+    const save=$('profileCropSave');
+    if(save){save.disabled=true;save.textContent='Saving…'}
+    status('Saving your profile photo…');
+
+    try{
+      const out=document.createElement('canvas');
+      out.width=720;out.height=720;
+      const c=out.getContext('2d');
+      c.clearRect(0,0,720,720);
+      c.save();c.beginPath();c.arc(360,360,360,0,Math.PI*2);c.clip();
+
+      const scale=720/canvas.width;
+      const base=Math.max(canvas.width/cropImage.width,canvas.height/cropImage.height);
+      const s=base*cropScale*scale;
+      const dw=cropImage.width*s,dh=cropImage.height*s;
+      const x=(720-dw)/2+cropX*scale,y=(720-dh)/2+cropY*scale;
+      c.drawImage(cropImage,x,y,dw,dh);
+      c.restore();
+
+      const blob=await new Promise((resolve,reject)=>
+        out.toBlob(b=>b?resolve(b):reject(new Error('Could not prepare the image.')),'image/webp',0.9)
+      );
+
+      const path=currentUser.id+'/avatar-'+Date.now()+'.webp';
+      const up=await SB.storage.from('avatars').upload(path,blob,{
+        contentType:'image/webp',cacheControl:'31536000',upsert:false
+      });
+      if(up.error)throw up.error;
+
+      const pub=SB.storage.from('avatars').getPublicUrl(path);
+      const url=pub.data?.publicUrl;
+      if(!url)throw new Error('Could not create the profile photo URL.');
+
+      const savedUrl=url+'?v='+Date.now();
+      const updated=await SB.auth.updateUser({
+        data:{avatar_url:savedUrl}
+      });
+      if(updated.error)throw updated.error;
+      currentUser=updated.data.user;
+      if(currentStudent?.id){
+        const savedUrl=url+'?v='+Date.now();
+        const sr=await SB.from('students').update({profile_photo_url:savedUrl}).eq('id',currentStudent.id);
+        if(sr.error)throw new Error('Photo uploaded, but the student profile could not be updated: '+sr.error.message);
+        currentStudent.profile_photo_url=savedUrl;
+      }
+
+      if(oldAvatarUrl){
+        const marker='/storage/v1/object/public/avatars/';
+        const i=oldAvatarUrl.indexOf(marker);
+        if(i>=0){
+          const oldPath=decodeURIComponent(oldAvatarUrl.slice(i+marker.length).split('?')[0]);
+          if(oldPath&&oldPath!==path)await SB.storage.from('avatars').remove([oldPath]);
+        }
+      }
+
+      render(await getIdentity());
+      closeCrop();
+      status('Profile photo updated successfully.','ok');
+    }catch(e){
+      console.error(e);
+      status('Photo could not be saved: '+(e.message||'Please try again.'),'error');
+    }finally{
+      if(save){save.disabled=false;save.textContent='Save photo'}
+    }
+  }
+
+  trigger.addEventListener('click',openProfile);
+  $('profileClose')?.addEventListener('click',closeProfile);
+  modal.addEventListener('click',e=>{if(e.target===modal)closeProfile()});
+
+  $('uploadProfileBtn')?.addEventListener('click',()=>$('profileFileInput')?.click());
+
+  $('profileFileInput')?.addEventListener('change',e=>{
+    const file=e.target.files?.[0];e.target.value='';
+    if(!file)return;
+    if(!/^image\/(jpeg|png|webp)$/i.test(file.type)){
+      status('Please choose a JPG, PNG or WebP image.','error');return;
+    }
+    if(file.size>8*1024*1024){
+      status('Please choose an image smaller than 8 MB.','error');return;
+    }
+    openCrop(file);
+  });
+
+  $('profileCropClose')?.addEventListener('click',closeCrop);
+  $('profileCropCancel')?.addEventListener('click',closeCrop);
+  $('profileCropSave')?.addEventListener('click',saveCrop);
+
+  zoom?.addEventListener('input',()=>{
+    cropScale=parseFloat(zoom.value);drawCrop();
+  });
+
+  stage?.addEventListener('pointerdown',e=>{
+    if(!cropImage)return;
+    dragging=true;lastX=e.clientX;lastY=e.clientY;
+    stage.setPointerCapture?.(e.pointerId);
+  });
+  stage?.addEventListener('pointermove',e=>{
+    if(!dragging)return;
+    cropX+=e.clientX-lastX;cropY+=e.clientY-lastY;
+    lastX=e.clientX;lastY=e.clientY;drawCrop();
+  });
+  stage?.addEventListener('pointerup',()=>dragging=false);
+  stage?.addEventListener('pointercancel',()=>dragging=false);
+
+  $('removeProfileBtn')?.addEventListener('click',async()=>{
+    if(currentParentMode){status('Parent view is read-only. The student must change their own profile photo.','error');return;}
+    const btn=$('removeProfileBtn');if(btn)btn.disabled=true;
+    status('Removing photo…');
+    try{
+      const old=oldAvatarUrl||currentUser?.user_metadata?.avatar_url||'';
+      const u=await SB.auth.updateUser({data:{avatar_url:null}});
+      if(u.error)throw u.error;
+      currentUser=u.data.user;
+      if(currentStudent?.id){
+        const sr=await SB.from('students').update({profile_photo_url:null}).eq('id',currentStudent.id);
+        if(sr.error)throw new Error('Photo removed from login, but the student profile could not be updated: '+sr.error.message);
+        currentStudent.profile_photo_url=null;
+      }
+
+      if(old){
+        const marker='/storage/v1/object/public/avatars/';
+        const i=old.indexOf(marker);
+        if(i>=0){
+          const p=decodeURIComponent(old.slice(i+marker.length).split('?')[0]);
+          if(p)await SB.storage.from('avatars').remove([p]);
+        }
+      }
+      render(await getIdentity());
+      status('Profile photo removed.','ok');
+    }catch(e){
+      status('Could not remove photo: '+(e.message||'Please try again.'),'error');
+    }finally{
+      if(btn)btn.disabled=false;
+    }
+  });
+
+  $('changePasswordBtn')?.addEventListener('click',async()=>{
+    if(currentParentMode){status('Parent view is read-only. The parent cannot change the student password.','error');return;}
+    const a=$('newPassword')?.value||'',b=$('confirmPassword')?.value||'',btn=$('changePasswordBtn');
+    if(a.length<8){status('Password must be at least 8 characters.','error');return}
+    if(a!==b){status('The passwords do not match.','error');return}
+    if(btn){btn.disabled=true;btn.textContent='Updating…'}
+    status('Updating your secure password…');
+
+    try{
+      const r=await SB.auth.updateUser({password:a,data:{...(currentUser?.user_metadata||{}),force_password_change:false}});
+      if(r.error)throw r.error;
+      $('newPassword').value='';$('confirmPassword').value='';
+      status('Password updated successfully. Your next login will use the new password.','ok');
+    }catch(e){
+      status('Password update failed: '+(e.message||'Please try again.'),'error');
+    }finally{
+      if(btn){btn.disabled=false;btn.textContent='Update password'}
+    }
+  });
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      if(cropModal?.classList.contains('show'))closeCrop();
+      else if(modal.classList.contains('show'))closeProfile();
+    }
+  });
+
+  void refreshProfile();
+  window.addEventListener("accessug:student-ready",()=>void refreshProfile());
+})();
+</script>
+</body>
+</html>

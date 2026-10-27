@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACCESS UG — Teacher Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+<style>
+:root{
+  --navy:#061a38;--blue:#0b3d82;--blue2:#1457a6;--bg:#f3f6fb;
+  --text:#13233a;--muted:#6d7b8e;--white:#fff;--border:#e3e9f2;
+  --success:#15966b;--danger:#d9534f;--warning:#d99419;
+  --shadow:0 10px 30px rgba(9,35,75,.08);--radius:16px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{min-height:100vh}
+.sidebar{
+  position:fixed;z-index:50;left:0;top:0;bottom:0;width:250px;padding:22px 14px;
+  background:linear-gradient(180deg,var(--navy),#092d63 62%,var(--blue2));color:#fff;
+  transition:.25s;overflow-y:auto
+}
+.brand{display:flex;align-items:center;gap:12px;padding:4px 10px 26px}
+.logo{width:44px;height:44px;border-radius:12px;background:#fff;color:var(--blue);display:grid;place-items:center;font-weight:900}
+.brand h1{font-size:17px;margin:0}.brand small{opacity:.72}
+.nav{display:grid;gap:7px}
+.nav button{
+  border:0;background:transparent;color:#dbe7f7;text-align:left;padding:13px 14px;
+  border-radius:11px;display:flex;gap:12px;align-items:center;font-weight:650;width:100%
+}
+.nav button:hover,.nav button.active{background:rgba(255,255,255,.13);color:#fff}
+.nav-icon{width:23px;text-align:center;font-size:18px}
+.sidebar-bottom{position:absolute;left:14px;right:14px;bottom:18px}
+.logout{width:100%;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;padding:12px;border-radius:11px;font-weight:700}
+.main{margin-left:250px;min-height:100vh}
+.top{
+  height:72px;background:#fff;border-bottom:1px solid var(--border);display:flex;
+  align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:30
+}
+.title-wrap{display:flex;align-items:center;gap:12px}.top h2{font-size:20px;margin:0}
+.menu-btn{display:none;border:0;background:#edf3fb;border-radius:10px;width:40px;height:40px}
+.user-mini{display:flex;align-items:center;gap:11px}.avatar{
+  width:38px;height:38px;border-radius:50%;background:#e5eefb;color:var(--blue);
+  display:grid;place-items:center;font-weight:800
+}
+.user-mini span{font-size:13px;color:var(--muted)}
+.content{padding:28px;max-width:1500px;margin:auto}
+.page{display:none}.page.active{display:block}
+.teacher-welcome-hero{background:linear-gradient(135deg,var(--navy),var(--blue) 68%,var(--blue2))!important;color:#fff!important;box-shadow:0 14px 34px rgba(6,26,56,.20)}
+.hero{margin-bottom:22px;background:linear-gradient(135deg,#061a38,#0b3d82 68%,#1457a6);color:#fff;border-radius:18px;padding:28px;box-shadow:0 10px 30px rgba(6,26,56,.18);position:relative;overflow:hidden}.hero:after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;right:-90px;top:-150px;background:rgba(255,255,255,.08)}.hero h1{margin:0 0 7px;font-size:28px;position:relative;z-index:1}.hero p{margin:0;color:#dbe7fa;position:relative;z-index:1}
+.grid{display:grid;gap:18px}.two{grid-template-columns:1.25fr .9fr}.three{grid-template-columns:repeat(3,1fr)}
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:21px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.card h3{margin:0;font-size:17px}.muted{color:var(--muted);font-size:13px}
+.profile{display:flex;gap:20px;align-items:center}.profile-avatar{
+  width:78px;height:78px;border-radius:20px;background:linear-gradient(135deg,#e9f1fd,#c9dbf5);
+  display:grid;place-items:center;color:var(--blue);font-size:27px;font-weight:900;overflow:hidden;flex:0 0 78px
+}.profile-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.profile-info h2{margin:0 0 5px;font-size:21px}.profile-info p{margin:3px 0;color:var(--muted)}
+.stat{padding:18px}.stat .label{font-size:13px;color:var(--muted)}
+.stat .value{font-size:28px;font-weight:800;margin-top:6px}.stat .sub{font-size:12px;color:var(--muted);margin-top:4px}
+.kpi-icon{width:42px;height:42px;border-radius:12px;background:#edf4fd;color:var(--blue);display:grid;place-items:center;font-size:20px}
+.chart-wrap{height:230px;position:relative}
+.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:18px}
+.field{display:grid;gap:6px;min-width:190px;flex:1}.field label{font-size:12px;font-weight:700;color:#566579}
+input,select,textarea{
+  width:100%;border:1px solid #d7e0ec;border-radius:10px;padding:11px 12px;
+  background:#fff;color:var(--text);outline:none
+}
+input:focus,select:focus,textarea:focus{border-color:#4f84c5;box-shadow:0 0 0 3px rgba(20,87,166,.1)}
+textarea{min-height:110px;resize:vertical}
+.btn{border:0;background:var(--blue);color:#fff;padding:11px 16px;border-radius:10px;font-weight:700}
+.btn:hover{background:#0a3470}.btn.secondary{background:#eef3f9;color:var(--text)}
+.btn.success{background:var(--success)}.btn.small{padding:8px 11px;font-size:12px}
+.btn:disabled{opacity:.65;cursor:not-allowed}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:720px;background:#fff}
+th,td{padding:12px 13px;border-bottom:1px solid var(--border);text-align:left;font-size:13px}
+th{background:#f7f9fc;color:#536278;font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+tr:last-child td{border-bottom:0}
+.badge{display:inline-flex;padding:5px 9px;border-radius:99px;font-size:11px;font-weight:800}
+.badge.active{background:#e7f7f0;color:#117052}
+.badge.present{background:#e7f7f0;color:#117052}
+.badge.absent{background:#fdebea;color:#a52f2b}
+.badge.auth{background:#fff4d9;color:#946700}
+.notice{padding:12px 14px;border-radius:10px;margin-bottom:16px;font-size:13px;display:none}
+.notice.show{display:block}.notice.ok{background:#e7f7f0;color:#116d50}
+.notice.err{background:#fdebea;color:#9d2e29}.notice.info{background:#eaf2fd;color:#174d8f}
+.save-state{margin:10px 0 0;font-size:13px;font-weight:700}
+.save-state.ok{color:#117052}.save-state.err{color:#a52f2b}
+.empty{text-align:center;padding:35px;color:var(--muted)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(4,17,37,.45);z-index:45}
+.overlay.show{display:block}
+.modal{display:none;position:fixed;z-index:60;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(600px,calc(100% - 28px));background:#fff;border-radius:18px;
+  box-shadow:0 25px 70px rgba(0,0,0,.25);padding:22px
+}
+.modal.show{display:block}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal h3{margin:0}.close{border:0;background:#eef3f9;border-radius:9px;width:36px;height:36px}
+.toast{position:fixed;right:20px;bottom:20px;z-index:100;background:#13233a;color:#fff;padding:13px 16px;
+  border-radius:11px;box-shadow:var(--shadow);display:none;max-width:380px}.toast.show{display:block}
+.hint{padding:11px 13px;background:#f7f9fc;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:12px;margin-top:12px}
+@media(max-width:1000px){.three{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}}
+@media(max-width:750px){
+  .sidebar{transform:translateX(-100%);width:240px}.sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}.menu-btn{display:grid;place-items:center}.top{padding:0 15px}
+  .user-mini span{display:none}.content{padding:16px}.three{grid-template-columns:1fr}
+  .profile{align-items:flex-start}.profile-info{min-width:0}.hero h1{font-size:24px}
+  .card{padding:17px}.toolbar .field{min-width:100%}.toolbar .btn{width:100%}
+}
+
+/* NOTIFICATION INBOX */
+.notification-wrap{position:relative}.notification-btn{width:42px;height:42px;border:1px solid #dbe5f2;background:#f4f8fd;color:#0b3d82;border-radius:10px;display:grid;place-items:center;cursor:pointer;position:relative;font-size:20px}.notification-badge{position:absolute;right:-3px;top:-5px;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:11px;font-weight:800;display:none;align-items:center;justify-content:center;border:2px solid #fff}.notification-popover{position:absolute;right:0;top:52px;width:min(360px,calc(100vw - 28px));background:#fff;border:1px solid #dce5f0;border-radius:16px;box-shadow:0 18px 45px rgba(15,42,86,.18);display:none;z-index:900;padding:12px}.notification-popover.show{display:block}.notification-popover-head{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 10px}.notification-popover-head h4{margin:0;color:#102a56}.notification-list{max-height:360px;overflow:auto}.notification-item{padding:12px;border-radius:12px;border:1px solid #e6edf5;margin:7px 0;cursor:pointer;background:#fff}.notification-item.unread{background:#f5f9ff;border-color:#cfe0f5}.notification-item strong{display:block;color:#102a56;font-size:14px}.notification-item p{margin:5px 0;color:#64748b;font-size:13px;line-height:1.4}.notification-item small{color:#94a3b8;font-size:11px}.notification-empty{padding:28px 12px;text-align:center;color:#718096}.inbox-card{margin-top:18px}.inbox-card .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.inbox-actions{display:flex;gap:8px;flex-wrap:wrap}.inbox-actions button{border:1px solid #dbe5f2;background:#fff;color:#0b3d82;border-radius:8px;padding:8px 11px;cursor:pointer;font-weight:700}@media(max-width:700px){.notification-popover{position:fixed;right:14px;top:72px}.notification-btn{width:40px;height:40px}}
+</style>
+
+<style id="accessug-profile-system">
+.profile-trigger{border:0;background:transparent;padding:0;display:flex;align-items:center;gap:10px;cursor:pointer;color:inherit;text-align:left}
+.profile-trigger .avatar{position:relative;overflow:hidden;flex:none}
+.profile-trigger .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.profile-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(4,18,42,.56);backdrop-filter:blur(7px);align-items:center;justify-content:center;padding:18px}
+.profile-modal.show{display:flex}
+.profile-modal-card{width:min(470px,100%);max-height:92vh;overflow:auto;background:#fff;border:1px solid #dce5f2;border-radius:22px;box-shadow:0 30px 90px rgba(5,25,60,.28);padding:24px}
+.profile-modal-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:20px}.profile-modal-head h3{margin:0;color:#102a50;font-size:20px}.profile-close{width:36px;height:36px;border:0;border-radius:10px;background:#eef3f9;color:#314766;font-size:20px;cursor:pointer}
+.profile-hero{display:flex;align-items:center;gap:16px;padding:16px;border:1px solid #e2e9f3;border-radius:16px;background:#f8faff;margin-bottom:18px}.profile-photo{width:76px;height:76px;border-radius:20px;overflow:hidden;background:linear-gradient(135deg,#eaf2ff,#cdddf6);display:grid;place-items:center;color:#1558b0;font-weight:900;font-size:24px;flex:none}.profile-photo img{width:100%;height:100%;object-fit:cover}.profile-hero h4{margin:0 0 5px;font-size:17px;color:#132d52}.profile-hero p{margin:3px 0;color:#73829a;font-size:12px}.profile-readonly{display:grid;gap:9px;margin-bottom:18px}.profile-readonly div{display:flex;justify-content:space-between;gap:16px;padding:10px 12px;border-radius:10px;background:#f7f9fc}.profile-readonly span{color:#718096;font-size:12px}.profile-readonly strong{color:#203a5f;font-size:12px;text-align:right;word-break:break-word}.profile-actions{display:flex;gap:9px;flex-wrap:wrap}.profile-actions .pbtn{border:0;border-radius:10px;padding:10px 13px;font-weight:750;font-size:12px;cursor:pointer}.pbtn.primary{background:#1559b7;color:#fff}.pbtn.secondary{background:#edf3fa;color:#233b5d}.pbtn.danger{background:#fff0ef;color:#a8322e}.profile-divider{height:1px;background:#e8edf4;margin:20px 0}.profile-modal label{display:block;color:#405673;font-size:12px;font-weight:750;margin:0 0 6px}.profile-modal input{width:100%;border:1px solid #d7e0ec;border-radius:10px;padding:11px 12px;outline:none}.profile-modal input:focus{border-color:#4b82cf;box-shadow:0 0 0 3px rgba(40,100,190,.1)}.profile-password-grid{display:grid;gap:10px}.profile-status{min-height:18px;margin-top:9px;font-size:12px;color:#65758b}.profile-status.error{color:#a8322e}.profile-status.ok{color:#117052}
+
+/* Premium profile photo cropper */
+.profile-crop-modal{display:none;position:fixed;inset:0;z-index:10050;background:rgba(4,18,42,.72);backdrop-filter:blur(9px);align-items:center;justify-content:center;padding:16px}.profile-crop-modal.show{display:flex}.profile-crop-card{width:min(560px,100%);background:#fff;border-radius:24px;padding:20px;box-shadow:0 30px 100px rgba(0,0,0,.3)}.profile-crop-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.profile-crop-head h3{margin:0;color:#102a50;font-size:19px}.profile-crop-stage{width:min(420px,88vw);height:min(420px,88vw);margin:0 auto 16px;position:relative;border-radius:18px;overflow:hidden;background:#0d1d33;display:grid;place-items:center}.profile-crop-stage canvas{width:100%;height:100%;display:block;touch-action:none}.profile-crop-guide{position:absolute;inset:10%;border:2px solid rgba(255,255,255,.92);border-radius:50%;box-shadow:0 0 0 999px rgba(0,0,0,.28);pointer-events:none}.profile-crop-controls{display:grid;gap:10px}.profile-crop-controls label{font-size:12px;font-weight:750;color:#405673}.profile-crop-controls input[type=range]{width:100%}.profile-crop-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:14px}.profile-crop-actions button{border:0;border-radius:10px;padding:10px 14px;font-weight:750;cursor:pointer}.profile-crop-cancel{background:#edf3fa;color:#233b5d}.profile-crop-save{background:#1559b7;color:#fff}.profile-photo img,.profile-trigger .avatar img{object-fit:cover;object-position:center;display:block;width:100%;height:100%}
+
+.behaviour-choice input{width:18px;height:18px;cursor:pointer}.behaviour-choice:hover{background:#f1f6fd}
+</style>
+<style id="accessug-v3"></style>
+<style id="accessug-teaching-ui">
+.teaching-card{margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
+.teaching-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.teaching-card-head strong{font-size:14px;color:#17345b}
+.teaching-count{font-size:11px;font-weight:800;color:#0b3d82;background:#eaf2ff;border-radius:999px;padding:6px 9px}
+.teaching-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.teaching-item{border:1px solid #e1e9f3;background:#f8fbff;border-radius:12px;padding:12px}
+.teaching-item-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.teaching-class{font-size:13px;font-weight:800;color:#16365e}
+.teaching-subject-count{font-size:10px;font-weight:800;color:#60738e;white-space:nowrap}
+.teaching-subjects{display:flex;flex-wrap:wrap;gap:6px}
+.teaching-chip{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;background:#fff;border:1px solid #dbe5f0;color:#3e5876;font-size:10px;font-weight:700}
+.teaching-more{font-size:10px;color:#60738e;font-weight:700;align-self:center}
+.teaching-empty{grid-column:1/-1;padding:13px;border:1px dashed #d5dfeb;border-radius:12px;color:#718096;font-size:12px;background:#fafcff}
+@media(max-width:700px){.teaching-grid{grid-template-columns:1fr}.teaching-card-head{align-items:flex-start}}
+</style>
+
+
+<style id="accessug-profile-polish">.profile-modal-card{line-height:1.45}.profile-actions{margin-top:8px}.profile-actions .pbtn{min-height:40px;padding:11px 15px;font-size:13px;letter-spacing:.1px}.profile-modal input{min-height:43px}.profile-divider{margin:22px 0}.profile-password-grid{gap:12px}.profile-status{line-height:1.5}.profile-modal .pbtn:focus-visible{outline:3px solid rgba(21,89,183,.25);outline-offset:2px}@media(max-width:480px){.profile-actions .pbtn{flex:1 1 auto}.profile-readonly div{align-items:flex-start}.profile-readonly strong{max-width:58%}}</style></head>
+
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar">
+  <div class="brand"><div class="logo">AU</div><div><h1>ACCESS UG</h1><small>Teacher Portal</small></div></div>
+  <nav class="nav">
+    <button class="active" data-page="dashboard"><span class="nav-icon">▦</span>Dashboard</button>
+    <button data-page="teaching"><span class="nav-icon">▤</span>My Teaching</button>
+    <button data-page="attendance"><span class="nav-icon">◷</span>Attendance</button>
+    <button data-page="behaviour"><span class="nav-icon">◉</span>Behaviour</button>
+    <button data-page="assessments"><span class="nav-icon">▤</span>Assessments</button>
+    <button data-page="endterm"><span class="nav-icon">▥</span>End of Term</button>
+    <button data-page="inbox"><span class="nav-icon">✉</span>Inbox <span id="inboxMenuBadge" class="badge" style="display:none;margin-left:auto">0</span></button>
+    <button data-page="reports"><span class="nav-icon">⚠</span>Reports / Issues</button>
+  </nav>
+  <div class="sidebar-bottom"><button class="logout" id="logoutBtn">↪ &nbsp; Log out</button></div>
+</aside>
+
+<div class="overlay" id="overlay"></div>
+
+<main class="main">
+<header class="top">
+  <div class="title-wrap"><button class="menu-btn" id="menuBtn">☰</button><h2 id="pageTitle">Teacher Dashboard</h2></div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="user-mini"><span id="topEmail">Loading...</span><button class="profile-trigger" id="profileTrigger" type="button" aria-label="Open profile"><div class="avatar" id="topAvatar">T</div></button></div>
+  </div>
+</header>
+
+<div class="content">
+
+<section id="dashboard" class="page active">
+  <div class="hero"><h1 id="welcome">Welcome, Teacher</h1><p id="welcomeSub">Loading your teaching overview...</p></div>
+  <div id="dashboardNotice" class="notice"></div>
+
+  <div class="grid two">
+    <div class="card">
+      <div class="card-head"><div><h3>Teacher Profile</h3><div class="muted">Your registered ACCESS UG profile</div></div><span class="badge active">Active</span></div>
+      <div class="profile">
+        <div class="profile-avatar" id="profileAvatar">T</div>
+        <div class="profile-info">
+          <h2 id="teacherName">Loading...</h2>
+          <p id="teacherSchool">Loading school...</p>
+          <p id="teacherEmployee">Employee number: —</p>
+          <p id="teacherPhone">Phone: —</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div><h3>Teacher Attendance</h3><div class="muted">Your attendance record</div></div><span id="dashboardClockStatus" class="badge active">Checking</span></div>
+
+      <div class="chart-wrap"><canvas id="teacherAttendanceChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid three" style="margin-top:18px">
+    <div class="card stat"><div class="kpi-icon">◷</div><div class="label" style="margin-top:12px">Present days</div><div class="value" id="presentDays">—</div><div class="sub">Teacher attendance records</div></div>
+    <div class="card stat"><div class="kpi-icon">▣</div><div class="label" style="margin-top:12px">Assigned classes</div><div class="value" id="classCount">—</div><div class="sub">Classes you can access</div></div>
+    <div class="card stat"><div class="kpi-icon">✓</div><div class="label" style="margin-top:12px">Today's status</div><div class="value" id="todayStatus">—</div><div class="sub">Attendance status</div></div>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <div class="card-head"><div><h3>Quick Actions</h3><div class="muted">Go directly to your teaching tasks</div></div></div>
+    <div class="grid three">
+      <button class="btn" data-go="attendance">Record Attendance</button>
+      <button class="btn" data-go="behaviour">Record Behaviour</button>
+      <button class="btn" data-go="assessments">Enter Assessment</button>
+    </div>
+  </div>
+</section>
+
+<section id="teaching" class="page">
+  <div class="hero"><h1>My Teaching</h1><p>Classes and subjects assigned to you.</p></div>
+  <div class="card">
+    <div class="card-head"><div><h3>Teaching assignments</h3><div class="muted">Your assigned classes and subjects</div></div><span id="teachingSummary" class="teaching-count">Loading...</span></div>
+    <div id="assignedClasses" class="teaching-grid"><div class="teaching-empty">Loading your assignments...</div></div>
+  </div>
+</section>
+
+<section id="inbox" class="page">
+  <div class="hero"><h1>Inbox</h1><p>Your notifications, student updates, reports and important school activity.</p></div>
+  <div class="card inbox-card">
+    <div class="card-head"><div><h3>Notifications</h3><div class="muted">New updates appear here without covering your dashboard.</div></div><div class="inbox-actions"><button id="markAllRead" type="button">Mark all as read</button></div></div>
+    <div class="notification-list" id="inboxList"><div class="notification-empty">Loading notifications…</div></div>
+  </div>
+</section>
+
+<section id="attendance" class="page">
+  <div class="hero"><h1>Attendance</h1><p>Record student attendance for your assigned classes.</p></div>
+  <div id="attendanceNotice" class="notice"></div><div id="attendanceSaveState" class="save-state"></div>
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-head"><div><h3>Teacher attendance</h3><div class="muted">Scan the school QR code or enter the attendance token provided by the school.</div></div><span id="clockStatus" class="badge active">Not checked in</span></div>
+    <div class="grid two">
+      <div class="field"><label for="attendanceToken">Attendance token</label><input id="attendanceToken" type="text" placeholder="Enter attendance token" autocomplete="off"></div>
+      <div class="actions" style="align-items:end"><button class="btn" id="scanAttendanceQr" type="button">Scan QR code</button><button class="btn success" id="submitAttendanceToken" type="button">Submit token</button></div>
+    </div>
+    <div id="attendanceTokenStatus" class="muted" style="margin-top:10px">Use the school’s current attendance QR or token.</div>
+    <input id="attendanceQrInput" type="file" accept="image/*" capture="environment" style="display:none">
+  </div>
+  <div class="card">
+    <div class="toolbar">
+      <div class="field"><label>Class</label><select id="attendanceClass"></select></div>
+      <div class="field"><label>Date</label><input type="date" id="attendanceDate"></div>
+      <button class="btn" id="loadAttendance">Load Students</button>
+    </div>
+    <div id="attendanceTable" class="empty">Choose a class and date, then load students.</div>
+    <div class="actions"><button class="btn success" id="saveAttendance" style="display:none">Save Attendance</button></div>
+  </div>
+</section>
+
+<section id="behaviour" class="page">
+  <div class="hero"><h1>Behaviour</h1><p>Record behaviour grades and observations for students in your assigned classes and subjects.</p></div>
+  <div id="behaviourNotice" class="notice"></div><div id="behaviourSaveState" class="save-state"></div>
+  <div class="card">
+    <div class="toolbar">
+      <div class="field"><label>Class</label><select id="behaviourClass"></select></div>
+      <div class="field"><label>Subject</label><select id="behaviourSubject"></select></div>
+      <div class="field"><label>Academic term</label><select id="behaviourTerm"></select></div>
+      <div class="field"><label>Behaviour date</label><input type="date" id="behaviourDate"></div>
+      <button class="btn" id="loadBehaviour">Load Students</button>
+    </div>
+    <div class="muted" style="margin-bottom:12px">A = +15 · B = +5 · C = +2 · D = −2 · E = −5. Double-click a grade to apply it to all loaded students; individual grades can then be changed.</div>
+    <div id="behaviourTable" class="empty">Choose a class, subject and term, then load students.</div>
+    <div class="actions"><button class="btn success" id="saveBehaviour" style="display:none">Save Behaviour</button></div>
+  </div>
+</section>
+
+<section id="assessments" class="page">
+  <div class="hero"><h1>Assessments</h1><p>Enter continuous assessment marks out of 20.</p></div>
+  <div id="assessmentNotice" class="notice"></div><div id="assessmentSaveState" class="save-state"></div>
+  <div class="card">
+    <div class="toolbar">
+      <div class="field"><label>Class</label><select id="assessmentClass"></select></div>
+      <div class="field"><label>Subject</label><select id="assessmentSubject"></select></div>
+      <div class="field"><label>Academic term</label><select id="assessmentTerm"></select></div>
+      <button class="btn" id="loadAssessments">Load Students</button>
+    </div>
+    <div id="assessmentTable" class="empty">Choose class, subject and term.</div>
+    <div class="actions"><button class="btn success" id="saveAssessments" style="display:none">Save Assessment Marks</button></div>
+  </div>
+</section>
+
+<section id="endterm" class="page">
+  <div class="hero"><h1>End of Term</h1><p>Enter end-of-term marks out of 80. Assessment marks are carried automatically and the final mark is calculated out of 100.</p></div>
+  <div id="endtermNotice" class="notice"></div><div id="endtermSaveState" class="save-state"></div>
+  <div class="card">
+    <div class="toolbar">
+      <div class="field"><label>Class</label><select id="endClass"></select></div>
+      <div class="field"><label>Subject</label><select id="endSubject"></select></div>
+      <div class="field"><label>Academic term</label><select id="endTerm"></select></div>
+      <button class="btn" id="loadEndTerm">Load Students</button>
+    </div>
+    <div id="endtermTable" class="empty">Choose class, subject and term.</div>
+    <div class="actions"><button class="btn success" id="saveEndTerm" style="display:none">Save End-Term Marks</button></div>
+  </div>
+</section>
+
+<section id="reports" class="page">
+  <div class="hero"><h1>Reports / Issues</h1><p>Report a student concern, attendance issue or other issue to the school.</p></div>
+  <div id="reportNotice" class="notice"></div>
+  <div class="card">
+    <div class="grid two">
+      <div class="field"><label>Report type</label><select id="reportType">
+        <option value="teacher_absence">Teacher absence</option><option value="student_issue">Student issue</option>
+        <option value="attendance_issue">Attendance issue</option><option value="academic_issue">Academic issue</option><option value="other">Other</option>
+      </select></div>
+      <div class="field"><label>Priority</label><select id="reportPriority"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
+    </div>
+    <div class="grid two" style="margin-top:16px">
+      <div class="field"><label>Student (optional)</label><select id="reportStudent"></select></div>
+      <div class="field"><label>Subject (optional)</label><input id="reportSubject" placeholder="e.g. Mathematics"></div>
+    </div>
+    <div class="field" style="margin-top:16px"><label>Description</label><textarea id="reportDescription" placeholder="Describe the issue clearly..."></textarea></div>
+    <div class="actions"><button class="btn" id="submitReport">Submit Report</button></div>
+  </div>
+  <div class="card" style="margin-top:18px"><div class="card-head"><div><h3>My submitted reports</h3><div class="muted">Reports submitted by your teacher account</div></div></div><div id="reportsTable" class="empty">Loading...</div></div>
+</section>
+
+</div>
+</main>
+</div>
+
+<div class="modal" id="errorModal">
+  <div class="modal-head"><h3>Teacher dashboard error</h3><button class="close" id="closeError">×</button></div>
+  <p id="errorText" class="muted"></p>
+  <div class="actions"><button class="btn" id="errorLogout">Return to Login</button></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================
+   ACCESS UG / Supabase
+   ========================= */
+const SUPABASE_URL="https://iotmozwesvmieqvsonov.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_4dKiWSMcl6wCe5Nn6m0mcQ_Vi8HiSZZ";
+
+const supabaseClient=window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY,
+  {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}
+);
+window.accessUgSupabaseClient=supabaseClient;
+window.supabaseClient = supabaseClient;
+
+let session=null;
+let teacher=null;
+let school=null;
+let teacherSchoolId=null;
+let assignments=[];
+let classes=[];
+let subjects=[];
+let terms=[];
+
+let attendanceRows=[];
+let behaviourRows=[];
+let assessmentRows=[];
+let endRows=[];
+let behaviourHasSubjectColumn=null;
+let behaviourDeletedIds=new Set();
+let charts={};
+
+const $=id=>document.getElementById(id);
+const val=id=>String($(id)?.value??"").trim();
+const todayISO=()=>new Date().toISOString().slice(0,10);
+
+function esc(v){
+  return String(v??"").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[c]));
+}
+function errorMessage(e){return e?.message||String(e||"Unknown error");}
+function initials(name){
+  return String(name||"Teacher").split(/\s+/).filter(Boolean).slice(0,2)
+    .map(x=>x[0]).join("").toUpperCase()||"T";
+}
+function teacherDisplayName(){
+  return [teacher?.first_name,teacher?.last_name].filter(Boolean).join(" ")
+    ||teacher?.name||teacher?.full_name||"Teacher";
+}
+function studentName(s){
+  return [s?.first_name,s?.last_name].filter(Boolean).join(" ")
+    ||s?.full_name||s?.name||s?.student_name||"Student";
+}
+function className(c){
+  return c?.name||[c?.level,c?.stream].filter(Boolean).join(" ")||"Class";
+}
+function itemLabel(x){
+  return x?.name||x?.subject_name||x?.title||x?.term_name||x?.label||className(x)||"Unnamed";
+}
+function notice(id,msg,type="ok"){
+  const e=$(id);if(!e)return;
+  e.textContent=msg;e.className="notice show "+type;
+}
+function clearNotice(id){
+  const e=$(id);if(e)e.className="notice";
+}
+function saveState(id,msg,type="ok"){
+  const e=$(id);if(e){e.textContent=msg;e.className="save-state "+type;}
+}
+function clearSaveState(id){
+  const e=$(id);if(e){e.textContent="";e.className="save-state";}
+}
+function toast(msg){
+  const e=$("toast");if(!e)return;
+  e.textContent=msg;e.classList.add("show");
+  setTimeout(()=>e.classList.remove("show"),3200);
+}
+function setButton(id,text,disabled=false){
+  const b=$(id);if(b){b.textContent=text;b.disabled=disabled;}
+}
+function fail(msg){
+  console.error("[ACCESS UG]",msg);
+  if($("errorText"))$("errorText").textContent=msg;
+  if($("errorModal"))$("errorModal").classList.add("show");
+}
+function redirectLogin(){
+  /* The login page in the current Access Ug folder is index.html. */
+  location.replace("index.html");
+}
+
+/* =========================
+   Navigation
+   ========================= */
+const pageTitles={
+  dashboard:"Teacher Dashboard",
+  teaching:"My Teaching",
+  attendance:"Attendance",
+  behaviour:"Behaviour",
+  assessments:"Assessments",
+  endterm:"End of Term",
+  inbox:"Inbox",
+  reports:"Reports / Issues"
+};
+
+function showPage(page){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  $(page)?.classList.add("active");
+  document.querySelectorAll("[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===page));
+  $("pageTitle").textContent=pageTitles[page]||"Teacher Dashboard";
+  $("sidebar").classList.remove("open");
+  $("overlay").classList.remove("show");
+}
+document.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.go)));
+$("menuBtn").addEventListener("click",()=>{
+  $("sidebar").classList.toggle("open");
+  $("overlay").classList.toggle("show",$("sidebar").classList.contains("open"));
+});
+$("overlay").addEventListener("click",()=>{
+  $("sidebar").classList.remove("open");$("overlay").classList.remove("show");
+});
+
+/* =========================
+   Teacher / school / setup
+   ========================= */
+async function loadSchool(){
+  school=null;
+  if(!teacherSchoolId)return;
+  const r=await supabaseClient.from("schools").select("*").eq("id",teacherSchoolId).maybeSingle();
+  if(!r.error)school=r.data||null;
+}
+
+async function loadAssignments(){
+  assignments=[];classes=[];subjects=[];
+  const r=await supabaseClient.from("teacher_class_assignments").select("*").eq("teacher_id",teacher.id);
+  if(r.error)throw new Error("Could not load teacher assignments: "+r.error.message);
+  assignments=(r.data||[]).filter(a=>a.status==null||String(a.status).toLowerCase()==="active");
+  const classIds=[...new Set(assignments.map(a=>a.class_id).filter(Boolean))];
+  const subjectIds=[...new Set(assignments.map(a=>a.subject_id).filter(Boolean))];
+  if(classIds.length){
+    const c=await supabaseClient.from("classes").select("*").in("id",classIds);
+    if(c.error)throw new Error("Could not load assigned classes: "+c.error.message);
+    classes=c.data||[];
+  }
+  if(subjectIds.length){
+    const sub=await supabaseClient.from("subjects").select("*").in("id",subjectIds);
+    if(sub.error)throw new Error("Could not load assigned subjects: "+sub.error.message);
+    subjects=sub.data||[];
+  }
+  if(!teacherSchoolId){
+    teacherSchoolId=teacher?.school_id||teacher?.school||
+      assignments.map(a=>a.school_id||a.school).find(Boolean)||
+      classes.map(c=>c.school_id||c.school).find(Boolean)||null;
+  }
+  if(!teacherSchoolId)throw new Error("Could not determine the teacher's school. Check the teacher assignment and school_id in Supabase.");
+}
+
+async function loadTerms(){
+  terms=[];
+  if(!teacherSchoolId)return;
+
+  /* IMPORTANT: the real table confirmed in this project is academic_terms,
+     not terms. */
+  const r=await supabaseClient.from("academic_terms")
+    .select("*")
+    .eq("school_id",teacherSchoolId)
+    .order("academic_year",{ascending:false})
+    .order("term_number",{ascending:true});
+
+  if(r.error)throw new Error("Could not load academic terms: "+r.error.message);
+  terms=r.data||[];
+}
+
+function assignedSubjectIds(classId){
+  return [...new Set(assignments
+    .filter(a=>String(a.class_id)===String(classId)&&a.subject_id)
+    .map(a=>String(a.subject_id)))];
+}
+
+function populateClassSelectors(){
+  const html='<option value="">Select class</option>'+
+    classes.map(c=>`<option value="${esc(c.id)}">${esc(className(c))}</option>`).join("");
+  ["attendanceClass","behaviourClass","assessmentClass","endClass"].forEach(id=>{
+    if($(id))$(id).innerHTML=html;
+  });
+}
+
+function populateTermSelectors(){
+  const html=terms.length
+    ? '<option value="">Select term</option>'+terms.map(t=>{
+        const name=t.name||t.term_name||`Term ${t.term_number}`;
+        const year=t.academic_year?` — ${t.academic_year}`:"";
+        return `<option value="${esc(t.id)}">${esc(name+year)}</option>`;
+      }).join("")
+    : '<option value="">No academic terms configured</option>';
+
+  ["behaviourTerm","assessmentTerm","endTerm"].forEach(id=>{
+    if($(id))$(id).innerHTML=html;
+  });
+}
+
+function updateSubjectForClass(selectId,classId){
+  const allowed=assignedSubjectIds(classId);
+  const list=subjects.filter(s=>allowed.includes(String(s.id)));
+  const e=$(selectId);
+  if(!e)return;
+
+  e.innerHTML=allowed.length
+    ? '<option value="">Select subject</option>'+list.map(s=>`<option value="${esc(s.id)}">${esc(itemLabel(s))}</option>`).join("")
+    : '<option value="">No subjects assigned to this class</option>';
+}
+
+function populateSelectors(){
+  populateClassSelectors();
+  populateTermSelectors();
+  ["behaviourClass","assessmentClass","endClass"].forEach(id=>{
+    if($(id))$(id).addEventListener("change",()=>{
+      const map={behaviourClass:"behaviourSubject",assessmentClass:"assessmentSubject",endClass:"endSubject"};
+      updateSubjectForClass(map[id],val(id));
+    });
+  });
+  updateSubjectForClass("behaviourSubject",val("behaviourClass"));
+  updateSubjectForClass("assessmentSubject",val("assessmentClass"));
+  updateSubjectForClass("endSubject",val("endClass"));
+}
+
+function renderIdentity(){
+  const name=teacherDisplayName();
+  const ini=initials(name);
+  $("welcome").textContent="Hi, welcome "+name+".";
+  $("welcomeSub").textContent="Here is your teaching overview today.";
+  $("teacherName").textContent=name;
+  $("teacherSchool").textContent=school?.name||school?.school_name||"ACCESS UG";
+  $("teacherEmployee").textContent="Employee number: "+(teacher.employee_number||teacher.employee_no||"—");
+  $("teacherPhone").textContent="Phone: "+(teacher.phone||teacher.phone_number||"—");
+  $("profileAvatar").textContent=ini;
+  $("topAvatar").textContent=ini;
+  $("topEmail").textContent=session.user.email||"";
+
+  const assignedEl=$("assignedClasses");
+  const summaryEl=$("teachingSummary");
+  if(assignedEl){
+    if(!classes.length){
+      assignedEl.innerHTML='<div class="teaching-empty">No active teaching assignments.</div>';
+      if(summaryEl)summaryEl.textContent="0 classes";
+    }else{
+      assignedEl.innerHTML=classes.map(c=>{
+        const subs=subjects.filter(s=>assignedSubjectIds(c.id).includes(String(s.id))).map(itemLabel);
+        const shown=subs.slice(0,8);
+        const more=Math.max(0,subs.length-shown.length);
+        return `<div class="teaching-item">
+          <div class="teaching-item-top">
+            <span class="teaching-class">${esc(className(c))}</span>
+            <span class="teaching-subject-count">${subs.length} subject${subs.length===1?"":"s"}</span>
+          </div>
+          <div class="teaching-subjects">
+            ${shown.length?shown.map(s=>`<span class="teaching-chip">${esc(s)}</span>`).join(""):'<span class="teaching-more">No subjects assigned</span>'}
+            ${more?`<span class="teaching-more">+${more} more</span>`:""}
+          </div>
+        </div>`;
+      }).join("");
+      if(summaryEl)summaryEl.textContent=`${classes.length} class${classes.length===1?"":"es"}`;
+    }
+  }
+  $("classCount").textContent=classes.length;
+}
+
+/* Students in this project are linked by school_id + class_level.
+   The existing Supabase data confirmed S3 North in class_level. */
+async function getStudents(classId){
+  if(!classId)throw new Error("Select a class.");
+  const selected=classes.find(c=>String(c.id)===String(classId));
+  if(!selected)throw new Error("Selected class is not in this teacher's assignments.");
+  if(!teacherSchoolId)throw new Error("Teacher account has no school assigned.");
+
+  const r=await supabaseClient.from("students").select("*").eq("school_id",teacherSchoolId);
+  if(r.error)throw new Error("Could not load students: "+r.error.message);
+
+  const norm=v=>String(v??"").trim().toLowerCase().replace(/\s+/g," ");
+  const wantedName=norm(selected.name);
+  const wantedLevel=norm(selected.level);
+  const wantedStream=norm(selected.stream);
+  const wantedCombined=norm([selected.level,selected.stream].filter(Boolean).join(" "));
+
+  return (r.data||[]).filter(s=>{
+    const value=norm(s.class_level);
+    return value===wantedName||
+      value===wantedCombined||
+      (wantedLevel&&wantedStream&&value===wantedLevel+" "+wantedStream);
+  }).sort((a,b)=>studentName(a).localeCompare(studentName(b)));
+}
+
+/* =========================
+   Teacher attendance
+   ========================= */
+
+async function loadTeacherAttendance(){
+  const since=new Date();
+  since.setDate(since.getDate()-90);
+
+  const r=await supabaseClient.from("teacher_attendance")
+    .select("attendance_date,status,clock_in")
+    .eq("teacher_id",teacher.id)
+    .gte("attendance_date",since.toISOString().slice(0,10));
+
+  if(r.error){
+    console.warn("Teacher attendance chart:",r.error.message);
+    return;
+  }
+
+  const rows=r.data||[];
+  const present=rows.filter(x=>{
+    const st=String(x.status||"").toLowerCase().trim();
+    return !!x.clock_in || ["present","late","checked_in"].includes(st);
+  }).length;
+  const absent=rows.filter(x=>String(x.status||"").toLowerCase().trim()==="absent").length;
+  const auth=rows.filter(x=>["authorized_absence","authorized absent","authorized"].includes(String(x.status||"").toLowerCase().trim())).length;
+
+  $("presentDays").textContent=present;
+  if(charts.teacherAttendance)charts.teacherAttendance.destroy();
+
+  const attendanceTotal=present+absent+auth;
+  const presentPercentage=attendanceTotal?Math.round((present/attendanceTotal)*100):0;
+
+  const chartWrap=$("teacherAttendanceChart")?.parentElement;
+  if(chartWrap){
+    chartWrap.style.position="relative";
+    let pct=chartWrap.querySelector("#teacherAttendancePercentage");
+    if(!pct){
+      pct=document.createElement("div");
+      pct.id="teacherAttendancePercentage";
+      pct.style.cssText="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;transform:translateY(-2px);font-weight:800";
+      chartWrap.appendChild(pct);
+    }
+    pct.innerHTML=`<span style="font-size:30px;line-height:1">${presentPercentage}%</span><span style="font-size:13px;margin-top:5px;font-weight:600">Present</span>`;
+  }
+
+  charts.teacherAttendance=new Chart($("teacherAttendanceChart"),{
+    type:"doughnut",
+    data:{labels:[`Present / Checked in (${presentPercentage}%)`,"Absent","Authorized absence"],datasets:[{data:[present,absent,auth]}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:"68%",plugins:{legend:{position:"bottom"}}}
+  });
+}
+
+
+/* =========================
+   Attendance
+   ========================= */
+async function submitTeacherAttendanceToken(){
+  const token=$("attendanceToken")?.value.trim(),status=$("attendanceTokenStatus"),btn=$("submitAttendanceToken");
+  if(!token){if(status)status.textContent="Enter an attendance token first.";return;}
+  if(btn){btn.disabled=true;btn.textContent="Submitting…";}
+  if(status)status.textContent="Submitting attendance token…";
+  try{const r=await supabaseClient.rpc("clock_in_teacher_with_token",{p_token:token});if(r.error)throw r.error;if($("clockStatus"))$("clockStatus").textContent="Present";if($("todayStatus"))$("todayStatus").textContent="Present";if(status)status.textContent="Attendance recorded successfully.";toast("Teacher attendance recorded.");await loadTeacherAttendance();}
+  catch(e){if(status)status.textContent="Attendance could not be recorded: "+errorMessage(e);}
+  finally{if(btn){btn.disabled=false;btn.textContent="Submit token";}}
+}
+$("submitAttendanceToken")?.addEventListener("click",submitTeacherAttendanceToken);
+
+/* QR SCAN — only the scan flow */
+const attendanceQrChoice=document.createElement("div");
+attendanceQrChoice.id="attendanceQrChoice";
+attendanceQrChoice.style.cssText="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;padding:20px";
+attendanceQrChoice.innerHTML=`<div style="background:#fff;border-radius:16px;padding:22px;max-width:360px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.2)">
+  <h3 style="margin:0 0 8px">Scan QR code</h3>
+  <p style="margin:0 0 18px;color:#667085">Choose how you want to scan the school QR code.</p>
+  <div style="display:grid;gap:10px">
+    <button class="btn" id="attendanceUseCamera" type="button">Use camera</button>
+    <button class="btn" id="attendanceUseGallery" type="button">Choose from gallery</button>
+    <button class="btn" id="attendanceQrCancel" type="button">Cancel</button>
+  </div>
+</div>`;
+document.body.appendChild(attendanceQrChoice);
+
+const attendanceCameraPanel=document.createElement("div");
+attendanceCameraPanel.id="attendanceCameraPanel";
+attendanceCameraPanel.style.cssText="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:10000;align-items:center;justify-content:center;padding:20px";
+attendanceCameraPanel.innerHTML=`<div style="background:#fff;border-radius:16px;padding:18px;max-width:420px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25)">
+  <h3 style="margin:0 0 12px">Scan QR code with camera</h3>
+  <video id="attendanceQrVideo" autoplay playsinline muted style="display:block;width:100%;max-height:55vh;object-fit:cover;border-radius:12px;background:#111"></video>
+  <p id="attendanceCameraStatus" class="muted" style="margin:10px 0">Allow camera access and point the camera at the QR code.</p>
+  <button class="btn" id="attendanceCameraCancel" type="button" style="width:100%">Cancel</button>
+</div>`;
+document.body.appendChild(attendanceCameraPanel);
+
+let attendanceCameraStream=null;
+let attendanceCameraTimer=null;
+
+function stopAttendanceCamera(){
+  if(attendanceCameraTimer){clearInterval(attendanceCameraTimer);attendanceCameraTimer=null;}
+  if(attendanceCameraStream){attendanceCameraStream.getTracks().forEach(t=>t.stop());attendanceCameraStream=null;}
+  const video=$("attendanceQrVideo");
+  if(video)video.srcObject=null;
+  attendanceCameraPanel.style.display="none";
+}
+
+async function startAttendanceCamera(){
+  attendanceQrChoice.style.display="none";
+  attendanceCameraPanel.style.display="flex";
+  const status=$("attendanceCameraStatus");
+
+  if(!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    if(status)status.textContent="Camera access requires HTTPS (or localhost). You can still choose a QR image from the gallery.";
+    return;
+  }
+
+  try{
+    attendanceCameraStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:"environment"}},
+      audio:false
+    });
+    const video=$("attendanceQrVideo");
+    if(!video)throw new Error("Camera preview could not be created.");
+    video.srcObject=attendanceCameraStream;
+    await video.play();
+
+    if(!("BarcodeDetector" in window)){
+      if(status)status.textContent="QR scanning is not supported by this browser. Choose a QR image from the gallery or enter the token manually.";
+      return;
+    }
+
+    const detector=new BarcodeDetector({formats:["qr_code"]});
+    attendanceCameraTimer=setInterval(async()=>{
+      if(!video.videoWidth||!video.videoHeight)return;
+      try{
+        const codes=await detector.detect(video);
+        if(codes.length&&codes[0].rawValue){
+          $("attendanceToken").value=codes[0].rawValue;
+          if($("attendanceTokenStatus"))$("attendanceTokenStatus").textContent="QR code read. Submit the token to record attendance.";
+          stopAttendanceCamera();
+        }
+      }catch(err){}
+    },350);
+  }catch(err){
+    if(status)status.textContent=(err&&err.name==="NotAllowedError")
+      ?"Camera permission was denied. Allow camera access, then try Scan QR code again."
+      :"Camera could not be opened here. If SPCK blocks camera access, use the HTTPS preview.";
+  }
+}
+
+async function readAttendanceQrFile(file){
+  if(!file)return;
+  const status=$("attendanceTokenStatus");
+  if(!("BarcodeDetector" in window)){
+    if(status)status.textContent="QR scanning is not supported here. Enter the attendance token manually.";
+    return;
+  }
+  try{
+    const d=new BarcodeDetector({formats:["qr_code"]});
+    const bitmap=await createImageBitmap(file);
+    const c=await d.detect(bitmap);
+    bitmap.close?.();
+    if(!c.length)throw new Error("No QR code found in that image.");
+    $("attendanceToken").value=c[0].rawValue||"";
+    if(status)status.textContent="QR code read. Submit the token to record attendance.";
+  }catch(err){
+    if(status)status.textContent=err.message||"Could not read that QR code.";
+  }
+}
+
+/* Use event delegation so the buttons remain responsive even though the
+   chooser is created dynamically. */
+document.addEventListener("click",e=>{
+  const id=e.target?.id;
+  if(id==="scanAttendanceQr"){
+    e.preventDefault();
+    attendanceQrChoice.style.display="flex";
+  }else if(id==="attendanceUseCamera"){
+    e.preventDefault();
+    startAttendanceCamera();
+  }else if(id==="attendanceUseGallery"){
+    e.preventDefault();
+    attendanceQrChoice.style.display="none";
+    $("attendanceQrInput")?.click();
+  }else if(id==="attendanceQrCancel"){
+    e.preventDefault();
+    attendanceQrChoice.style.display="none";
+  }else if(id==="attendanceCameraCancel"){
+    e.preventDefault();
+    stopAttendanceCamera();
+  }
+});
+
+$("attendanceQrInput")?.addEventListener("change",async e=>{
+  const file=e.target.files?.[0];
+  e.target.value="";
+  await readAttendanceQrFile(file);
+});
+
+$("loadAttendance").addEventListener("click",loadAttendance);
+$("saveAttendance").addEventListener("click",saveAttendance);
+
+async function loadAttendance(){
+  clearNotice("attendanceNotice");clearSaveState("attendanceSaveState");
+  try{
+    const classId=val("attendanceClass"),date=val("attendanceDate");
+    if(!classId||!date)throw new Error("Select a class and date first.");
+    const students=await getStudents(classId);
+    if(!students.length){
+      attendanceRows=[];$("attendanceTable").innerHTML='<div class="empty">No students are registered in this class.</div>';
+      $("saveAttendance").style.display="none";return;
+    }
+    const old=await supabaseClient.from("student_attendance").select("student_id,status,notes")
+      .eq("school_id",teacherSchoolId).eq("class_id",classId).eq("attendance_date",date);
+    if(old.error)throw old.error;
+    const map=new Map((old.data||[]).map(x=>[x.student_id,x]));
+    attendanceRows=students.map(s=>({student:s,status:map.get(s.id)?.status||"present",notes:map.get(s.id)?.notes||""}));
+    $("attendanceTable").innerHTML=`<div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Student</th><th>Present</th><th>Absent</th><th>Authorized absence</th><th>Notes</th></tr></thead><tbody>
+      ${attendanceRows.map((r,i)=>`<tr>
+        <td>${i+1}</td><td><strong>${esc(studentName(r.student))}</strong></td>
+        ${["present","absent","authorized_absence"].map(st=>`<td style="text-align:center"><input type="radio" name="attendance-${i}" value="${st}" data-att-status="${i}" ${r.status===st?"checked":""} aria-label="${st}"></td>`).join("")}
+        <td><input data-att-note="${i}" value="${esc(r.notes)}" placeholder="Optional note"></td>
+      </tr>`).join("")}
+      </tbody></table></div>`;
+    $("saveAttendance").style.display="inline-block";
+    notice("attendanceNotice",`${students.length} student${students.length===1?"":"s"} loaded. Select Present, Absent or Authorized absence, then save.` ,"info");
+  }catch(e){
+    notice("attendanceNotice","Could not load attendance: "+errorMessage(e),"err");
+    $("saveAttendance").style.display="none";
+  }
+}
+
+async function saveAttendance(){
+  clearNotice("attendanceNotice");clearSaveState("attendanceSaveState");
+  const classId=val("attendanceClass"),date=val("attendanceDate");
+  if(!classId||!date||!attendanceRows.length)return notice("attendanceNotice","Load students first.","err");
+  setButton("saveAttendance","Saving attendance…",true);
+  try{
+    let saved=0;
+    for(let i=0;i<attendanceRows.length;i++){
+      const statusEl=document.querySelector(`[data-att-status="${i}"]:checked`);
+      const noteEl=document.querySelector(`[data-att-note="${i}"]`);
+      if(!statusEl)throw new Error("Select an attendance status for "+studentName(attendanceRows[i].student)+".");
+      const payload={student_id:attendanceRows[i].student.id,class_id:classId,school_id:teacherSchoolId,attendance_date:date,status:statusEl.value,recorded_by:teacher.id,notes:String(noteEl?.value||"").trim()||null};
+      const old=await supabaseClient.from("student_attendance").select("id").eq("student_id",payload.student_id).eq("class_id",classId).eq("attendance_date",date).maybeSingle();
+      if(old.error)throw old.error;
+      const r=old.data?await supabaseClient.from("student_attendance").update(payload).eq("id",old.data.id):await supabaseClient.from("student_attendance").insert(payload);
+      if(r.error)throw r.error;saved++;
+    }
+    saveState("attendanceSaveState",`✓ ${saved} attendance record${saved===1?"":"s"} saved and confirmed in Supabase.` ,"ok");
+    notice("attendanceNotice",`Attendance saved successfully for ${date}.`,"ok");
+    setButton("saveAttendance","Attendance Saved ✓",false);toast("Attendance saved successfully.");
+  }catch(e){
+    saveState("attendanceSaveState","✕ NOT CONFIRMED: "+errorMessage(e),"err");
+    notice("attendanceNotice","Attendance was NOT saved: "+errorMessage(e),"err");
+    setButton("saveAttendance","Save Attendance",false);
+  }
+}
+
+/* =========================
+   Behaviour
+   ========================= */
+$("loadBehaviour").addEventListener("click",loadBehaviour);
+$("saveBehaviour").addEventListener("click",saveBehaviour);
+
+async function loadBehaviourRecords(classId,termId,subjectId,date){
+  let q=supabaseClient.from("behaviour_records").select("*")
+    .eq("class_id",classId).eq("term_id",termId).eq("teacher_id",teacher.id);
+  if(behaviourHasSubjectColumn!==false)q=q.or(`subject_id.eq.${subjectId},subject_id.is.null`);
+  if(date)q=q.eq("behaviour_date",date);
+  let r=await q;
+  if(!r.error){behaviourHasSubjectColumn=true;return r.data||[];}
+  const msg=String(r.error.message||"").toLowerCase();
+  if(msg.includes("subject_id")){
+    behaviourHasSubjectColumn=false;
+    let fallback=supabaseClient.from("behaviour_records").select("*").eq("class_id",classId).eq("term_id",termId).eq("teacher_id",teacher.id);
+    if(date)fallback=fallback.eq("behaviour_date",date);
+    const fr=await fallback;if(fr.error)throw fr.error;return fr.data||[];
+  }
+  if(msg.includes("behaviour_date")||msg.includes("column")){
+    let fallback=supabaseClient.from("behaviour_records").select("*").eq("class_id",classId).eq("term_id",termId).eq("teacher_id",teacher.id);
+    if(behaviourHasSubjectColumn!==false)fallback=fallback.or(`subject_id.eq.${subjectId},subject_id.is.null`);
+    const fr=await fallback;if(fr.error)throw fr.error;return fr.data||[];
+  }
+  throw r.error;
+}
+
+const behaviourPoints={A:15,B:5,C:2,D:-2,E:-5};
+
+function behaviourWeek(date,termStart){
+  const d=new Date(date+"T00:00:00");
+  const start=new Date(termStart+"T00:00:00");
+  const diff=Math.max(0,Math.floor((d-start)/86400000));
+  return Math.min(13,Math.floor(diff/7)+1);
+}
+
+async function loadBehaviour(){
+  clearNotice("behaviourNotice");clearSaveState("behaviourSaveState");
+  try{
+    const classId=val("behaviourClass"),subjectId=val("behaviourSubject"),termId=val("behaviourTerm");
+    const date=val("behaviourDate")||todayISO();
+    $("behaviourDate").value=date;
+    if(!classId||!subjectId||!termId)throw new Error("Select class, subject and academic term first.");
+    if(!assignedSubjectIds(classId).includes(String(subjectId)))throw new Error("That subject is not assigned to you for this class.");
+    const students=await getStudents(classId);
+    if(!students.length)throw new Error("No students are registered in this class.");
+    const old=await loadBehaviourRecords(classId,termId,subjectId,date);
+    const grouped=new Map();
+    (old||[]).forEach(x=>{const key=String(x.student_id);if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(x);});
+    behaviourDeletedIds=new Set();
+    behaviourRows=students.map(s=>({student:s,events:(grouped.get(String(s.id))||[]).map(x=>({id:x.id,grade:String(x.grade||"").toUpperCase(),comment:x.comment||x.notes||""})).concat((grouped.get(String(s.id))||[]).length?[]:[{id:null,grade:"",comment:""}])}));
+    renderBehaviourEditor();
+    $("saveBehaviour").style.display="inline-block";
+    notice("behaviourNotice",`${students.length} student${students.length===1?"":"s"} loaded for ${date}. Existing events are preserved; add as many events as needed for the same student and date.` ,"info");
+  }catch(e){notice("behaviourNotice","Could not load Behaviour: "+errorMessage(e),"err");$("saveBehaviour").style.display="none";}
+}
+
+function renderBehaviourEditor(){
+  const table=$("behaviourTable");
+  if(!table)return;
+  table.innerHTML=`<div class="hint"><strong>GO 4 Schools-style recording:</strong> every behaviour event is kept as its own record. A +15 · B +5 · C +2 · D −2 · E −5. A student can have multiple positive or negative events on the same day. Use <strong>+ Add event</strong> to record another event; removing an existing event marks it for deletion when you save.</div><div class="behaviour-bulk" style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin:12px 0"><div class="field" style="min-width:180px"><label>Apply grade to first event for all students</label><select id="behaviourBulkGrade"><option value="">Choose grade…</option><option value="A">A · +15</option><option value="B">B · +5</option><option value="C">C · +2</option><option value="D">D · −2</option><option value="E">E · −5</option></select></div><button class="btn secondary" id="applyBehaviourBulk" type="button">Apply</button></div><div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Student</th><th>Behaviour events</th><th>Total today</th></tr></thead><tbody>
+    ${behaviourRows.map((r,i)=>`<tr><td>${i+1}</td><td style="min-width:150px"><strong>${esc(studentName(r.student))}</strong><div class="muted" style="margin-top:4px">${r.events.filter(e=>e.id).length} saved event${r.events.filter(e=>e.id).length===1?"":"s"}</div></td><td><div class="beh-event-list" data-student-events="${i}">${r.events.map((ev,j)=>behaviourEventHtml(i,j,ev)).join("")}</div><button class="btn secondary" type="button" data-add-beh-event="${i}" style="margin-top:8px">＋ Add event</button></td><td><strong data-student-total="${i}">${behaviourEventTotal(r.events)}</strong></td></tr>`).join("")}
+    </tbody></table></div>`;
+  bindBehaviourEditor();
+}
+
+function behaviourEventTotal(events){
+  return events.reduce((sum,e)=>sum+(e.grade?behaviourPoints[e.grade]||0:0),0);
+}
+
+function behaviourEventHtml(studentIndex,eventIndex,ev){
+  const g=String(ev.grade||"").toUpperCase();
+  const deleted=ev.id&&behaviourDeletedIds.has(String(ev.id));
+  return `<div class="beh-event" data-student-index="${studentIndex}" data-event-index="${eventIndex}" data-record-id="${esc(ev.id||"")}" style="border:1px solid #dbe5f0;border-radius:12px;padding:10px;margin:0 0 8px;background:${deleted?'#fff4f4':'#fbfdff'};opacity:${deleted?.55:1}">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="badge">Event ${eventIndex+1}${deleted?' · marked for deletion':''}</span>${["A","B","C","D","E"].map(x=>`<label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer"><input type="radio" name="beh-event-${studentIndex}-${eventIndex}" value="${x}" data-beh-grade="${studentIndex}:${eventIndex}" ${g===x&&!deleted?"checked":""} ${deleted?'disabled':''}>${x} <small>${behaviourPoints[x]>0?"+":""}${behaviourPoints[x]}</small></label>`).join("")}<button class="btn secondary" type="button" data-remove-beh-event="${studentIndex}:${eventIndex}" style="margin-left:auto;padding:6px 9px">${deleted?'Undo':'Remove'}</button></div>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:7px;margin-top:8px"><input data-beh-comment="${studentIndex}:${eventIndex}" value="${esc(ev.comment||"")}" placeholder="Optional observation" ${deleted?'disabled':''}></div>
+  </div>`;
+}
+
+function bindBehaviourEditor(){
+  document.querySelectorAll('[data-beh-grade]').forEach(el=>el.addEventListener('change',()=>{
+    const [si,ei]=String(el.dataset.behGrade).split(':').map(Number);
+    const row=behaviourRows[si]; if(row?.events?.[ei])row.events[ei].grade=el.value;
+    const total=document.querySelector(`[data-student-total="${si}"]`);if(total)total.textContent=behaviourEventTotal(row.events);
+  }));
+  document.querySelectorAll('[data-add-beh-event]').forEach(btn=>btn.addEventListener('click',()=>{
+    const si=Number(btn.dataset.addBehEvent);behaviourRows[si].events.push({id:null,grade:"",comment:""});renderBehaviourEditor();
+  }));
+  document.querySelectorAll('[data-remove-beh-event]').forEach(btn=>btn.addEventListener('click',()=>{
+    const [si,ei]=String(btn.dataset.removeBehEvent).split(':').map(Number);
+    const ev=behaviourRows[si].events[ei];
+    if(ev?.id){const id=String(ev.id);if(behaviourDeletedIds.has(id))behaviourDeletedIds.delete(id);else behaviourDeletedIds.add(id);}
+    else behaviourRows[si].events.splice(ei,1);
+    renderBehaviourEditor();
+  }));
+  $("applyBehaviourBulk")?.addEventListener('click',()=>{
+    const g=$("behaviourBulkGrade")?.value;if(!g)return toast('Choose a grade first.');
+    behaviourRows.forEach(r=>{if(!r.events.length)r.events.push({id:null,grade:"",comment:""});r.events[0].grade=g;});
+    renderBehaviourEditor();toast(`Grade ${g} applied to the first event for all loaded students.`);
+  });
+}
+
+async function saveBehaviour(){
+  clearNotice("behaviourNotice");clearSaveState("behaviourSaveState");
+  const classId=val("behaviourClass"),subjectId=val("behaviourSubject"),termId=val("behaviourTerm"),date=val("behaviourDate")||todayISO();
+  if(!classId||!subjectId||!termId||!behaviourRows.length)return notice("behaviourNotice","Load class, subject, term and students first.","err");
+  if(!assignedSubjectIds(classId).includes(String(subjectId)))return notice("behaviourNotice","That subject is not assigned to you for this class.","err");
+  setButton("saveBehaviour","Saving behaviour…",true);
+  try{
+    let saved=0,deleted=0;
+    if(behaviourDeletedIds.size){
+      const ids=[...behaviourDeletedIds];
+      const del=await supabaseClient.from("behaviour_records").delete().in("id",ids);
+      if(del.error)throw del.error; deleted=ids.length;
+    }
+    for(let i=0;i<behaviourRows.length;i++){
+      for(let j=0;j<behaviourRows[i].events.length;j++){
+        const ev=behaviourRows[i].events[j];
+        if(!ev.grade){if(ev.comment)throw new Error(`Select a behaviour grade for ${studentName(behaviourRows[i].student)} (event ${j+1}).`);continue;}
+        const comment=document.querySelector(`[data-beh-comment="${i}:${j}"]`)?.value.trim()||null;
+        const payload={student_id:behaviourRows[i].student.id,teacher_id:teacher.id,school_id:teacherSchoolId,class_id:classId,term_id:termId,grade:ev.grade,points:behaviourPoints[ev.grade],comment,behaviour_date:date};
+        if(behaviourHasSubjectColumn===true)payload.subject_id=subjectId;
+        let r;
+        if(ev.id){
+          r=await supabaseClient.from("behaviour_records").update(payload).eq("id",ev.id);
+        }else{
+          r=await supabaseClient.from("behaviour_records").insert(payload).select("id").single();
+          if(!r.error&&r.data)ev.id=r.data.id;
+        }
+        if(r.error)throw r.error;saved++;
+      }
+    }
+    behaviourDeletedIds=new Set();
+    saveState("behaviourSaveState",`✓ ${saved} behaviour event${saved===1?"":"s"} saved${deleted?` · ${deleted} removed`:""} and confirmed in Supabase.` ,"ok");
+    notice("behaviourNotice",`Behaviour saved for ${date}. Multiple events for the same student and day are now preserved as separate records.` ,"ok");
+    setButton("saveBehaviour","Behaviour Saved ✓",false);toast("Behaviour events saved successfully.");
+    renderBehaviourEditor();
+  }catch(e){saveState("behaviourSaveState","✕ NOT CONFIRMED: "+errorMessage(e),"err");notice("behaviourNotice","Behaviour was NOT saved: "+errorMessage(e),"err");setButton("saveBehaviour","Save Behaviour",false);}
+}
+
+/* =========================
+   Assessments
+   ========================= */
+$("loadAssessments").addEventListener("click",loadAssessments);
+$("saveAssessments").addEventListener("click",saveAssessments);
+
+async function loadAssessments(){
+  clearNotice("assessmentNotice");clearSaveState("assessmentSaveState");
+  try{
+    const classId=val("assessmentClass"),subjectId=val("assessmentSubject"),termId=val("assessmentTerm");
+    if(!classId||!subjectId||!termId)throw new Error("Select class, subject and academic term first.");
+    if(!assignedSubjectIds(classId).includes(String(subjectId)))throw new Error("That subject is not assigned to you for this class.");
+
+    const students=await getStudents(classId);
+    if(!students.length)throw new Error("No students are registered in this class.");
+
+    const old=await supabaseClient.from("assessments").select("*")
+      .eq("class_id",classId).eq("subject_id",subjectId).eq("term_id",termId);
+    if(old.error)throw old.error;
+
+    const map=new Map((old.data||[]).map(x=>[x.student_id,x]));
+    assessmentRows=students.map(s=>({student:s,record:map.get(s.id)}));
+
+    $("assessmentTable").innerHTML=`<div class="table-wrap"><table>
+      <thead><tr><th>Student</th><th>Assessment mark / 20</th></tr></thead><tbody>
+      ${assessmentRows.map((r,i)=>`<tr>
+        <td><strong>${esc(studentName(r.student))}</strong></td>
+        <td><input type="number" min="0" max="20" step="0.01" data-assess="${i}"
+          value="${r.record?.mark??""}" placeholder="0–20"></td>
+      </tr>`).join("")}
+      </tbody></table></div>`;
+
+    $("saveAssessments").style.display="inline-block";
+    notice("assessmentNotice",`${students.length} student${students.length===1?"":"s"} loaded. Enter marks out of 20 and save.`,"info");
+  }catch(e){
+    notice("assessmentNotice","Could not load assessments: "+errorMessage(e),"err");
+    $("saveAssessments").style.display="none";
+  }
+}
+
+async function saveAssessments(){
+  clearNotice("assessmentNotice");clearSaveState("assessmentSaveState");
+  const classId=val("assessmentClass"),subjectId=val("assessmentSubject"),termId=val("assessmentTerm");
+  const assessmentClassRow=classes.find(c=>String(c.id)===String(classId));
+  const assessmentSchoolId=assessmentClassRow?.school_id||teacherSchoolId;
+  if(!classId||!subjectId||!termId||!assessmentRows.length)return notice("assessmentNotice","Load class, subject and term first.","err");
+
+  setButton("saveAssessments","Saving assessment…",true);
+  try{
+    let saved=0;
+
+    for(let i=0;i<assessmentRows.length;i++){
+      const input=document.querySelector(`[data-assess="${i}"]`);
+      const v=Number(input?.value);
+      if(!Number.isFinite(v)||v<0||v>20)throw new Error("Every assessment mark must be between 0 and 20.");
+
+      const payload={
+        student_id:assessmentRows[i].student.id,subject_id:subjectId,class_id:classId,
+        school_id:assessmentSchoolId,term_id:termId,teacher_id:teacher.id,
+        mark:v,max_mark:20,updated_at:new Date().toISOString()
+      };
+
+      const old=await supabaseClient.from("assessments").select("id")
+        .eq("student_id",payload.student_id).eq("subject_id",subjectId)
+        .eq("term_id",termId).maybeSingle();
+      if(old.error)throw old.error;
+
+      const r=old.data
+        ?await supabaseClient.from("assessments").update(payload).eq("id",old.data.id)
+        :await supabaseClient.from("assessments").insert(payload);
+
+      if(r.error)throw r.error;
+      saved++;
+    }
+
+    const vr=await supabaseClient.from("assessments").select("id",{count:"exact",head:true})
+      .eq("class_id",classId).eq("subject_id",subjectId).eq("term_id",termId);
+    if(vr.error)throw vr.error;
+    if(Number(vr.count||0)<saved)throw new Error(`Supabase verification found ${vr.count||0} records; ${saved} were expected.`);
+
+    saveState("assessmentSaveState",`✓ CONFIRMED in Supabase: ${saved} assessment mark${saved===1?"":"s"} saved.`,"ok");
+    notice("assessmentNotice",`Assessment marks saved successfully. ${saved} record${saved===1?"":"s"} confirmed in Supabase.`,"ok");
+    setButton("saveAssessments","Assessment Saved ✓",false);
+    toast("Assessment marks saved and verified.");
+  }catch(e){
+    saveState("assessmentSaveState","✕ NOT CONFIRMED in Supabase: "+errorMessage(e),"err");
+    notice("assessmentNotice","Assessment was NOT confirmed as saved: "+errorMessage(e),"err");
+    setButton("saveAssessments","Save Assessment Marks",false);
+  }
+}
+
+/* =========================
+   End of term
+   ========================= */
+$("loadEndTerm").addEventListener("click",loadEndTerm);
+$("saveEndTerm").addEventListener("click",saveEndTerm);
+
+async function loadEndTerm(){
+  clearNotice("endtermNotice");clearSaveState("endtermSaveState");
+  try{
+    const classId=val("endClass"),subjectId=val("endSubject"),termId=val("endTerm");
+    if(!classId||!subjectId||!termId)throw new Error("Select class, subject and academic term first.");
+    if(!assignedSubjectIds(classId).includes(String(subjectId)))throw new Error("That subject is not assigned to you for this class.");
+
+    const students=await getStudents(classId);
+    if(!students.length)throw new Error("No students are registered in this class.");
+
+    /* This is the important fix for the problem shown in the screenshot:
+       end-of-term reads the assessment table again for the SAME class,
+       subject and term, so the marks entered by the teacher are displayed. */
+    const ass=await supabaseClient.from("assessments").select("student_id,mark")
+      .eq("class_id",classId).eq("subject_id",subjectId).eq("term_id",termId);
+    if(ass.error)throw new Error("Could not load assessment marks for end-of-term: "+ass.error.message);
+
+    const old=await supabaseClient.from("end_term_results").select("*")
+      .eq("class_id",classId).eq("subject_id",subjectId).eq("term_id",termId);
+    if(old.error)throw old.error;
+
+    const amap=new Map((ass.data||[]).map(x=>[x.student_id,x.mark]));
+    const emap=new Map((old.data||[]).map(x=>[x.student_id,x]));
+
+    endRows=students.map(s=>({
+      student:s,
+      assessment:amap.get(s.id)??0,
+      record:emap.get(s.id)
+    }));
+
+    $("endtermTable").innerHTML=`<div class="table-wrap"><table>
+      <thead><tr><th>Student</th><th>Assessment /20</th><th>End Term /80</th><th>Final /100</th></tr></thead><tbody>
+      ${endRows.map((r,i)=>`<tr>
+        <td><strong>${esc(studentName(r.student))}</strong></td>
+        <td>${Number(r.assessment).toFixed(2)}</td>
+        <td><input type="number" min="0" max="80" step="0.01" data-end="${i}"
+          value="${r.record?.end_term_mark??""}" placeholder="0–80"></td>
+        <td id="final-${i}">${r.record?.final_mark!=null?Number(r.record.final_mark).toFixed(2):Number(r.assessment).toFixed(2)}</td>
+      </tr>`).join("")}
+      </tbody></table></div>`;
+
+    $("endtermTable").querySelectorAll("[data-end]").forEach(el=>{
+      el.addEventListener("input",e=>{
+        const i=Number(e.target.getAttribute("data-end"));
+        const v=Number(e.target.value);
+        const a=Number(endRows[i]?.assessment||0);
+        $(`final-${i}`).textContent=(a+(Number.isFinite(v)?v:0)).toFixed(2);
+      });
+    });
+
+    $("saveEndTerm").style.display="inline-block";
+    notice("endtermNotice",`${students.length} student${students.length===1?"":"s"} loaded. Assessment marks are shown from Supabase.`,"info");
+  }catch(e){
+    notice("endtermNotice","Could not load end-of-term data: "+errorMessage(e),"err");
+    $("saveEndTerm").style.display="none";
+  }
+}
+
+async function saveEndTerm(){
+  clearNotice("endtermNotice");clearSaveState("endtermSaveState");
+  const classId=val("endClass"),subjectId=val("endSubject"),termId=val("endTerm");
+  const endClassRow=classes.find(c=>String(c.id)===String(classId));
+  const endSchoolId=endClassRow?.school_id||teacherSchoolId;
+  if(!classId||!subjectId||!termId||!endRows.length)return notice("endtermNotice","Load class, subject and term first.","err");
+
+  setButton("saveEndTerm","Saving end-term…",true);
+  try{
+    let saved=0;
+
+    for(let i=0;i<endRows.length;i++){
+      const input=document.querySelector(`[data-end="${i}"]`);
+      const v=Number(input?.value);
+      if(!Number.isFinite(v)||v<0||v>80)throw new Error("Every end-of-term mark must be between 0 and 80.");
+
+      const assessment=Number(endRows[i].assessment||0);
+      const finalMark=assessment+v;
+
+      const payload={
+        student_id:endRows[i].student.id,subject_id:subjectId,class_id:classId,
+        school_id:endSchoolId,term_id:termId,teacher_id:teacher.id,
+        assessment_mark:assessment,end_term_mark:v,max_mark:80,
+        updated_at:new Date().toISOString()
+      };
+
+      const old=await supabaseClient.from("end_term_results").select("id")
+        .eq("student_id",payload.student_id).eq("subject_id",subjectId)
+        .eq("term_id",termId).maybeSingle();
+      if(old.error)throw old.error;
+
+      const r=old.data
+        ?await supabaseClient.from("end_term_results").update(payload).eq("id",old.data.id)
+        :await supabaseClient.from("end_term_results").insert(payload);
+
+      if(r.error)throw r.error;
+      saved++;
+    }
+
+    const vr=await supabaseClient.from("end_term_results").select("id",{count:"exact",head:true})
+      .eq("class_id",classId).eq("subject_id",subjectId).eq("term_id",termId);
+    if(vr.error)throw vr.error;
+    if(Number(vr.count||0)<saved)throw new Error(`Supabase verification found ${vr.count||0} records; ${saved} were expected.`);
+
+    saveState("endtermSaveState",`✓ CONFIRMED in Supabase: ${saved} end-of-term result${saved===1?"":"s"} saved. Final marks are out of 100.`,"ok");
+    notice("endtermNotice",`End-of-term results saved successfully. ${saved} record${saved===1?"":"s"} confirmed in Supabase.`,"ok");
+    setButton("saveEndTerm","End-Term Saved ✓",false);
+    toast("End-term results saved and verified.");
+  }catch(e){
+    saveState("endtermSaveState","✕ NOT CONFIRMED in Supabase: "+errorMessage(e),"err");
+    notice("endtermNotice","End-term results were NOT confirmed as saved: "+errorMessage(e),"err");
+    setButton("saveEndTerm","Save End-Term Marks",false);
+  }
+}
+
+/* =========================
+   Reports
+   ========================= */
+async function loadReportStudents(){
+  try{
+    const unique=new Map();
+    for(const c of classes){
+      const rows=await getStudents(c.id);
+      rows.forEach(s=>unique.set(s.id,s));
+    }
+    const data=[...unique.values()];
+    $("reportStudent").innerHTML='<option value="">No specific student</option>'+
+      data.map(s=>`<option value="${esc(s.id)}">${esc(studentName(s))}</option>`).join("");
+  }catch(e){
+    $("reportStudent").innerHTML='<option value="">Unable to load students</option>';
+  }
+}
+
+async function loadReports(){
+  const e=$("reportsTable");if(!e||!teacher)return;
+  e.textContent="Loading...";
+  const r=await supabaseClient.from("reports").select("*")
+    .eq("reported_by",teacher.id).order("created_at",{ascending:false}).limit(30);
+
+  if(r.error){
+    e.innerHTML='<div class="empty">Could not load reports: '+esc(r.error.message)+'</div>';return;
+  }
+  const rows=r.data||[];
+  if(!rows.length){e.innerHTML='<div class="empty">You have not submitted any reports.</div>';return;}
+
+  e.innerHTML=`<div class="table-wrap"><table><thead><tr>
+    <th>Date</th><th>Type</th><th>Priority</th><th>Status</th><th>Description</th>
+  </tr></thead><tbody>${rows.map(x=>`<tr>
+    <td>${esc((x.created_at||"").slice(0,10))}</td>
+    <td>${esc(x.report_type||"—")}</td><td>${esc(x.priority||"normal")}</td>
+    <td>${esc(x.status||"open")}</td><td>${esc(x.description||"—")}</td>
+  </tr>`).join("")}</tbody></table></div>`;
+}
+
+$("submitReport").addEventListener("click",async()=>{
+  clearNotice("reportNotice");
+  const description=val("reportDescription");
+  if(!description)return notice("reportNotice","Please describe the issue.","err");
+
+  const payload={
+    school_id:teacherSchoolId,
+    reported_by:teacher.id,
+    teacher_id:teacher.id,
+    student_id:val("reportStudent")||null,
+    report_type:val("reportType"),
+    subject:val("reportSubject")||null,
+    description,
+    priority:val("reportPriority")||"normal",
+    status:"open"
+  };
+
+  const r=await supabaseClient.from("reports").insert(payload);
+  if(r.error)return notice("reportNotice","Report could not be submitted: "+r.error.message,"err");
+
+  $("reportDescription").value="";
+  $("reportSubject").value="";
+  notice("reportNotice","Report submitted successfully.","ok");
+  toast("Report submitted.");
+  await loadReports();
+});
+
+/* =========================
+   Notifications / Inbox
+   ========================= */
+let notificationUserId=null;
+let notificationChannel=null;
+let notificationsCache=[];
+function notificationTime(value){const d=new Date(value);return value&&!Number.isNaN(d.getTime())?d.toLocaleString([], {dateStyle:"medium",timeStyle:"short"}):"";}
+function renderNotifications(){const unread=notificationsCache.filter(n=>!n.is_read).length;const badge=$("notificationBadge");if(badge){badge.textContent=unread>99?"99+":String(unread);badge.style.display=unread?"flex":"none";}const menuBadge=$("inboxMenuBadge");if(menuBadge){menuBadge.textContent=unread>99?"99+":String(unread);menuBadge.style.display=unread?"inline-flex":"none";}const html=notificationsCache.length?notificationsCache.map(n=>`<div class="notification-item ${n.is_read?"":"unread"}" data-notification-id="${esc(n.id)}"><strong>${esc(n.title||"Notification")}</strong><p>${esc(n.message||"")}</p><small>${esc(n.type||"update")} · ${esc(notificationTime(n.created_at))}</small></div>`).join(""):'<div class="notification-empty">No notifications yet.</div>';if($("inboxList"))$("inboxList").innerHTML=html;if($("notificationPopoverList"))$("notificationPopoverList").innerHTML=html;document.querySelectorAll("[data-notification-id]").forEach(el=>el.addEventListener("click",async()=>{const id=el.getAttribute("data-notification-id"),n=notificationsCache.find(x=>String(x.id)===String(id));if(!n||n.is_read)return;const r=await supabaseClient.from("notifications").update({is_read:true}).eq("id",id).eq("recipient_user_id",notificationUserId);if(!r.error){n.is_read=true;renderNotifications();}}));}
+async function loadNotifications(){if(!notificationUserId)return;const r=await supabaseClient.from("notifications").select("id,recipient_user_id,type,title,message,is_read,created_at").eq("recipient_user_id",notificationUserId).order("created_at",{ascending:false}).limit(50);if(r.error){console.error("Notifications load error:",r.error);const msg='<div class="notification-empty">Notifications could not be loaded. The rest of the dashboard is still available.</div>';if($("inboxList"))$("inboxList").innerHTML=msg;if($("notificationPopoverList"))$("notificationPopoverList").innerHTML=msg;return;}notificationsCache=r.data||[];renderNotifications();}
+function setupNotifications(userId){notificationUserId=userId;loadNotifications();if(notificationChannel){try{supabaseClient.removeChannel(notificationChannel);}catch(_){}notificationChannel=null;}notificationChannel=supabaseClient.channel("teacher-notifications-"+userId).on("postgres_changes",{event:"*",schema:"public",table:"notifications",filter:"recipient_user_id=eq."+userId},payload=>{if(payload.eventType==="INSERT")notificationsCache=[payload.new,...notificationsCache].slice(0,50);else if(payload.eventType==="UPDATE")notificationsCache=notificationsCache.map(n=>String(n.id)===String(payload.new.id)?payload.new:n);else if(payload.eventType==="DELETE")notificationsCache=notificationsCache.filter(n=>String(n.id)!==String(payload.old.id));renderNotifications();}).subscribe();}
+function initInboxUI(){$("notificationBtn")?.addEventListener("click",()=>$("notificationPopover")?.classList.toggle("show"));$("markAllRead")?.addEventListener("click",markAllNotificationsRead);$("markAllReadTop")?.addEventListener("click",markAllNotificationsRead);document.addEventListener("click",e=>{const wrap=document.querySelector(".notification-wrap");if(wrap&&!wrap.contains(e.target))$("notificationPopover")?.classList.remove("show");});}
+async function markAllNotificationsRead(){if(!notificationUserId)return;const r=await supabaseClient.from("notifications").update({is_read:true}).eq("recipient_user_id",notificationUserId).eq("is_read",false);if(r.error){console.error("Mark all notifications read error:",r.error);return;}notificationsCache=notificationsCache.map(n=>({...n,is_read:true}));renderNotifications();}
+
+/* =========================
+   Login / initialization
+   ========================= */
+async function init(){
+  try{
+    $("attendanceDate").value=todayISO();
+    if($("behaviourDate"))$("behaviourDate").value=todayISO();
+
+    const r=await supabaseClient.auth.getSession();
+    if(r.error)throw new Error("Could not read the Supabase session: "+r.error.message);
+
+    session=r.data?.session;
+    if(!session){redirectLogin();return;}
+
+    const email=(session.user.email||"").trim().toLowerCase();
+    if(!email)throw new Error("The authenticated Supabase account has no email address.");
+
+    /* Teacher identity is intentionally matched by email because that is
+       the structure used by this ACCESS UG project. */
+    const t=await supabaseClient.from("teachers").select("*").ilike("email",email).limit(20);
+    if(t.error)throw new Error("Teacher lookup failed: "+t.error.message);
+    const teacherRows=t.data||[];
+    const activeTeacherRows=teacherRows.filter(x=>!x.status||String(x.status).trim().toLowerCase()==="active");
+    teacher=activeTeacherRows[0]||teacherRows[0]||null;
+    if(!teacher)throw new Error("No teacher profile was found for "+email+" in public.teachers.");
+    teacherSchoolId=teacher.school_id||teacher.school||null;
+
+    if(teacher.status&&String(teacher.status).toLowerCase()!=="active")
+      throw new Error("This teacher account is not active.");
+
+    // Load assignments before any school-scoped save operation.
+    await loadAssignments();
+    if(!teacherSchoolId)throw new Error("Could not determine the teacher's school from the teacher record or assigned classes.");
+
+    setupNotifications(session.user.id);
+    initInboxUI();
+
+    const setupResults=await Promise.allSettled([loadSchool(),loadTerms()]);
+    const failed=setupResults.filter(x=>x.status==="rejected");
+    renderIdentity();
+    populateSelectors();
+    if(failed.length)notice("dashboardNotice","Some teaching setup information could not be loaded. You can still use the sections that are available.","info");
+
+    // Secondary panels are independent; one slow/failing query no longer freezes the page.
+    void (async()=>{
+      await loadTeacherAttendance();
+      await Promise.allSettled([loadReportStudents(),loadReports()]);
+    })();
+  }catch(e){
+    fail("The teacher dashboard could not finish loading: "+errorMessage(e));
+  }
+}
+
+$("logoutBtn").addEventListener("click",async()=>{
+  await supabaseClient.auth.signOut();
+  redirectLogin();
+});
+$("errorLogout").addEventListener("click",async()=>{
+  await supabaseClient.auth.signOut();
+  redirectLogin();
+});
+$("closeError").addEventListener("click",()=>$("errorModal").classList.remove("show"));
+
+supabaseClient.auth.onAuthStateChange((event)=>{
+  if(event==="SIGNED_OUT")redirectLogin();
+});
+
+init();
+</script>
+
+<div class="profile-modal" id="profileModal" aria-hidden="true">
+  <div class="profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+    <div class="profile-modal-head"><h3 id="profileModalTitle">My Profile</h3><button class="profile-close" id="profileClose" type="button" aria-label="Close">×</button></div>
+    <div class="profile-hero">
+      <div class="profile-photo" id="profilePhoto">U</div>
+      <div><h4 id="profileModalName">Loading…</h4><p id="profileModalEmail">Loading…</p><p id="profileModalSchool">Loading…</p></div>
+    </div>
+    <div class="profile-readonly"><div><span>Name</span><strong id="profileReadName">—</strong></div><div><span>School</span><strong id="profileReadSchool">—</strong></div><div><span>Email</span><strong id="profileReadEmail">—</strong></div></div>
+    <div class="profile-actions"><button class="pbtn primary" id="uploadProfileBtn" type="button">Upload photo</button><button class="pbtn secondary" id="removeProfileBtn" type="button">Remove photo</button><input id="profileFileInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></div>
+    <div class="profile-divider"></div>
+    <h4 style="margin:0 0 10px;color:#173354;font-size:15px">Change password</h4>
+    <div class="profile-password-grid"><div><label for="newPassword">New password</label><input id="newPassword" type="password" autocomplete="new-password" minlength="6" placeholder="Enter new password"></div><div><label for="confirmPassword">Confirm password</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" placeholder="Confirm new password"></div><button class="pbtn primary" id="changePasswordBtn" type="button">Update password</button></div>
+    <div class="profile-status" id="profileStatus" role="status"></div>
+  </div>
+</div>
+
+
+<div class="profile-crop-modal" id="profileCropModal" aria-hidden="true">
+  <div class="profile-crop-card" role="dialog" aria-modal="true" aria-labelledby="profileCropTitle">
+    <div class="profile-crop-head"><h3 id="profileCropTitle">Position your profile photo</h3><button class="profile-close" id="profileCropClose" type="button" aria-label="Close">×</button></div>
+    <div class="profile-crop-stage" id="profileCropStage"><canvas id="profileCropCanvas" width="420" height="420"></canvas><div class="profile-crop-guide"></div></div>
+    <div class="profile-crop-controls"><label for="profileZoom">Zoom — drag the photo inside the circle</label><input id="profileZoom" type="range" min="0.5" max="3.5" step="0.01" value="1"></div>
+    <div class="profile-crop-actions"><button class="profile-crop-cancel" id="profileCropCancel" type="button">Cancel</button><button class="profile-crop-save" id="profileCropSave" type="button">Save photo</button></div>
+  </div>
+</div>
+
+<script id="accessug-profile-js">
+(function(){
+  const SB=window.accessUgSupabaseClient;
+  const $=id=>document.getElementById(id);
+  if(!SB)return;
+  const modal=$('profileModal'),trigger=$('profileTrigger');
+  if(!modal||!trigger)return;
+  let currentUser=null,currentIdentity=null,cropImage=null,cropScale=1,cropX=0,cropY=0,dragging=false,lastX=0,lastY=0,oldAvatarUrl='';
+  const cropModal=$('profileCropModal'),canvas=$('profileCropCanvas'),stage=$('profileCropStage'),zoom=$('profileZoom'),ctx=canvas?.getContext('2d');
+  const initials=(name,email)=>{const s=String(name||email||'U').trim(),p=s.split(/\s+/).filter(Boolean);return (p.length>1?p[0][0]+p[p.length-1][0]:s.slice(0,2)).toUpperCase()};
+  const status=(msg,type)=>{const e=$('profileStatus');if(e){e.textContent=msg||'';e.className='profile-status'+(type?' '+type:'')}};
+  const safeUrl=u=>String(u||'').replace(/"/g,'&quot;');
+  const avatarUrl=u=>u?String(u):'';
+
+  async function sessionUser(){
+    const {data,error}=await SB.auth.getUser();
+    if(error||!data?.user)throw new Error('Your session has expired. Please log in again.');
+    currentUser=data.user;
+    return currentUser;
+  }
+  async function getIdentity(){
+    const u=await sessionUser();
+    const email=String(u.email||'').trim();
+    let name=String(u.user_metadata?.full_name||u.user_metadata?.name||'').trim();
+    let schoolName=String(u.user_metadata?.school_name||'').trim();
+    const role=String(localStorage.getItem('accessug_selected_role')||'').toLowerCase();
+    const sid=sessionStorage.getItem('accessug_school_id')||localStorage.getItem('accessug_school_id');
+    const tid=sessionStorage.getItem('accessug_teacher_id')||localStorage.getItem('accessug_teacher_id');
+    const stid=localStorage.getItem('accessug_student_id')||sessionStorage.getItem('accessug_student_id');
+    const tryOne=async(fn)=>{try{return await fn()}catch(e){return {data:null,error:e}}};
+    if(role==='administrator'||!role){
+      const r=await tryOne(()=>SB.from('profiles').select('full_name,role').eq('id',u.id).maybeSingle());
+      if(!r.error&&r.data){name=name||r.data.full_name||'';}
+    }
+    if(role==='school'||sid||!role){
+      const r=await tryOne(()=>sid?SB.from('schools').select('name,email').eq('id',sid).maybeSingle():SB.from('schools').select('name,email').ilike('email',email).maybeSingle());
+      if(!r.error&&r.data){name=r.data.name||name;schoolName=r.data.name||schoolName;}
+    }
+    if(role==='teacher'||tid||!role){
+      const r=await tryOne(()=>tid?SB.from('teachers').select('*').eq('id',tid).maybeSingle():SB.from('teachers').select('*').ilike('email',email).maybeSingle());
+      if(!r.error&&r.data){const t=r.data;name=name||[t.first_name,t.last_name].filter(Boolean).join(' ')||t.full_name||t.name||'Teacher';const s=t.school_id||t.school;if(s){const sr=await tryOne(()=>SB.from('schools').select('name').eq('id',s).maybeSingle());if(!sr.error&&sr.data)schoolName=sr.data.name||schoolName;}}
+    }
+    if(role==='student'||stid||!role){
+      const r=await tryOne(()=>stid?SB.from('students').select('*').eq('id',stid).maybeSingle():SB.from('students').select('*').ilike('email',email).maybeSingle());
+      if(!r.error&&r.data){const s=r.data;name=name||s.student_name||s.full_name||[s.first_name,s.last_name].filter(Boolean).join(' ')||'Student';const sid2=s.school_id||s.school;if(sid2){const sr=await tryOne(()=>SB.from('schools').select('name').eq('id',sid2).maybeSingle());if(!sr.error&&sr.data)schoolName=sr.data.name||schoolName;}}
+    }
+    return {name:name||email.split('@')[0]||'User',email,schoolName:schoolName||'—'};
+  }
+  function setAvatar(el,url,name,email){if(!el)return;if(url)el.innerHTML='<img src="'+safeUrl(url)+'" alt="Profile photo">';else el.textContent=initials(name,email);}
+  function render(id){
+    currentIdentity=id;const url=avatarUrl(currentUser?.user_metadata?.avatar_url);oldAvatarUrl=url;
+    setAvatar($('profilePhoto'),url,id.name,id.email);
+    setAvatar(document.querySelector('#profileTrigger .avatar'),url,id.name,id.email);
+    setAvatar($('profileAvatar'),url,id.name,id.email);
+    const map=[['profileModalName',id.name],['profileModalEmail',id.email],['profileModalSchool',id.schoolName],['profileReadName',id.name],['profileReadEmail',id.email],['profileReadSchool',id.schoolName]];
+    map.forEach(([k,v])=>{if($(k))$(k).textContent=v});
+    const topEmail=$('topEmail');if(topEmail)topEmail.textContent=id.email;
+  }
+  async function refreshProfile(){try{const id=await getIdentity();render(id);return id}catch(e){console.warn('Profile refresh:',e.message)}}
+  function openProfile(){modal.classList.add('show');modal.setAttribute('aria-hidden','false');status('');void refreshProfile()}
+  function closeProfile(){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');status('')}
+  function openCrop(file){
+    if(!cropModal||!canvas||!ctx)return;
+    const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{cropImage=img;cropScale=Math.max(1,420/Math.min(img.width,img.height));cropX=0;cropY=0;zoom.value=1;drawCrop();cropModal.classList.add('show');cropModal.setAttribute('aria-hidden','false')};img.src=reader.result};reader.readAsDataURL(file);
+  }
+  function drawCrop(){
+    if(!ctx||!cropImage)return;const w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#0d1d33';ctx.fillRect(0,0,w,h);
+    const base=Math.max(w/cropImage.width,h/cropImage.height);const s=base*cropScale;const dw=cropImage.width*s,dh=cropImage.height*s;const x=(w-dw)/2+cropX,y=(h-dh)/2+cropY;ctx.drawImage(cropImage,x,y,dw,dh);
+  }
+  function closeCrop(){if(cropModal){cropModal.classList.remove('show');cropModal.setAttribute('aria-hidden','true')}cropImage=null}
+  async function saveCrop(){
+    if(!currentUser||!cropImage)return;const save=$('profileCropSave');if(save){save.disabled=true;save.textContent='Saving…'}status('Saving your profile photo…');
+    try{
+      const out=document.createElement('canvas');out.width=720;out.height=720;const c=out.getContext('2d');c.clearRect(0,0,720,720);c.save();c.beginPath();c.arc(360,360,360,0,Math.PI*2);c.clip();
+      const scale=720/canvas.width;const base=Math.max(canvas.width/cropImage.width,canvas.height/cropImage.height);const s=base*cropScale*scale;const dw=cropImage.width*s,dh=cropImage.height*s;const x=(720-dw)/2+cropX*scale,y=(720-dh)/2+cropY*scale;c.drawImage(cropImage,x,y,dw,dh);c.restore();
+      const blob=await new Promise((resolve,reject)=>out.toBlob(b=>b?resolve(b):reject(new Error('Could not prepare the image.')),'image/webp',0.9));
+      const path=currentUser.id+'/avatar-'+Date.now()+'.webp';
+      const up=await SB.storage.from('avatars').upload(path,blob,{contentType:'image/webp',cacheControl:'31536000',upsert:false});if(up.error)throw up.error;
+      const pub=SB.storage.from('avatars').getPublicUrl(path);const url=pub.data?.publicUrl;if(!url)throw new Error('Could not create the profile photo URL.');
+      const updated=await SB.auth.updateUser({data:{avatar_url:url+'?v='+Date.now()}});if(updated.error)throw updated.error;currentUser=updated.data.user;
+      // Remove the previous file only after the new metadata is safely stored.
+      if(oldAvatarUrl){const marker='/storage/v1/object/public/avatars/';const i=oldAvatarUrl.indexOf(marker);if(i>=0){const oldPath=decodeURIComponent(oldAvatarUrl.slice(i+marker.length).split('?')[0]);if(oldPath&&oldPath!==path)await SB.storage.from('avatars').remove([oldPath]);}}
+      render(await getIdentity());closeCrop();status('Profile photo updated successfully.','ok');setTimeout(()=>status(''),2500);
+    }catch(e){console.error(e);status('Photo could not be saved: '+(e.message||'Please try again.'),'error')}
+    finally{if(save){save.disabled=false;save.textContent='Save photo'}}
+  }
+  trigger.addEventListener('click',openProfile);$('profileClose')?.addEventListener('click',closeProfile);modal.addEventListener('click',e=>{if(e.target===modal)closeProfile()});
+  $('uploadProfileBtn')?.addEventListener('click',()=>{const f=$('profileFileInput');if(f)f.click()});
+  $('profileFileInput')?.addEventListener('change',e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;if(!/^image\/(jpeg|png|webp)$/i.test(file.type)){status('Please choose a JPG, PNG or WebP image.','error');return}if(file.size>8*1024*1024){status('Please choose an image smaller than 8 MB.','error');return}openCrop(file)});
+  $('profileCropClose')?.addEventListener('click',closeCrop);$('profileCropCancel')?.addEventListener('click',closeCrop);$('profileCropSave')?.addEventListener('click',saveCrop);
+  zoom?.addEventListener('input',()=>{cropScale=parseFloat(zoom.value);drawCrop()});
+  stage?.addEventListener('pointerdown',e=>{if(!cropImage)return;dragging=true;lastX=e.clientX;lastY=e.clientY;stage.setPointerCapture?.(e.pointerId)});
+  stage?.addEventListener('pointermove',e=>{if(!dragging)return;cropX+=e.clientX-lastX;cropY+=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;drawCrop()});
+  stage?.addEventListener('pointerup',()=>dragging=false);stage?.addEventListener('pointercancel',()=>dragging=false);
+  stage?.addEventListener('wheel',e=>{if(!cropImage)return;e.preventDefault();cropScale=Math.min(3.5,Math.max(.5,cropScale+(e.deltaY<0?.05:-.05)));zoom.value=cropScale;drawCrop()},{passive:false});
+  $('removeProfileBtn')?.addEventListener('click',async()=>{const btn=$('removeProfileBtn');if(btn)btn.disabled=true;status('Removing photo…');try{const old=oldAvatarUrl||currentUser?.user_metadata?.avatar_url||'';const u=await SB.auth.updateUser({data:{avatar_url:null}});if(u.error)throw u.error;currentUser=u.data.user;if(old){const marker='/storage/v1/object/public/avatars/';const i=old.indexOf(marker);if(i>=0){const p=decodeURIComponent(old.slice(i+marker.length).split('?')[0]);if(p)await SB.storage.from('avatars').remove([p])}}render(await getIdentity());status('Profile photo removed.','ok')}catch(e){status('Could not remove photo: '+(e.message||'Please try again.'),'error')}finally{if(btn)btn.disabled=false}});
+  $('changePasswordBtn')?.addEventListener('click',async()=>{const a=$('newPassword')?.value||'',b=$('confirmPassword')?.value||'',btn=$('changePasswordBtn');if(a.length<8){status('Password must be at least 8 characters.','error');return}if(a!==b){status('The passwords do not match.','error');return}if(btn){btn.disabled=true;btn.textContent='Updating…'}status('Updating your secure password…');try{const r=await SB.auth.updateUser({password:a,data:{...(currentUser?.user_metadata||{}),force_password_change:false}});if(r.error)throw r.error;$('newPassword').value='';$('confirmPassword').value='';status('Password updated successfully. Your next login will use the new password.','ok')}catch(e){status('Password update failed: '+(e.message||'Please try again.'),'error')}finally{if(btn){btn.disabled=false;btn.textContent='Update password'}}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(cropModal?.classList.contains('show'))closeCrop();else if(modal.classList.contains('show'))closeProfile()}});
+  // Initialize the visible avatar immediately; profile loading never blocks the dashboard.
+  void refreshProfile();
+})();
+</script>
+</body>
+</html>
